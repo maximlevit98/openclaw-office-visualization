@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# local runtime
+.tmp/
+logs/
+
+# optional app code outputs
+node_modules/
+.next/
+dist/
+coverage/
