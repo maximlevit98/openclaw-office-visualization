@@ -1,57 +1,33 @@
 # Producer Approval — Office Visualization
 
-_Last updated: 2026-02-21_
+> Reviewed: 2026-02-21 01:25 MSK (Cycle 2)
 
-## Active Direction
-**Concept A: "The Bullpen"** — spatial office metaphor with expressive agent cards. See `concepts.md`.
+## Visual Direction
 
----
-
-## Phase 0: Foundation — **GO** ✅
-All items approved. This is table-stakes scaffolding.
-
-| Item | Decision | Rationale |
+| Concept | Verdict | Notes |
 |---|---|---|
-| Backend: API contract doc | GO | Blocks everything else. Top priority. |
-| Designer: Design tokens + sketches | GO | Align on visual language before any frontend work. Request: lean into the "Bullpen" warmth — warm neutrals, not corporate blue. |
-| Frontend: App scaffold | GO | Pick framework and get dev server running. Recommend Next.js or plain Vite+React — keep it simple. |
-| Product: Spec + roadmap | GO (done) | Solid spec. No changes needed. |
+| A: "The Bullpen" | **GO ✅** | Active direction. Spatial metaphor nails the brief. MVP uses flat cards; isometric is post-MVP. |
+| B: "Mission Control" | **NO-GO 🚫** | Parked. Too cold for "office teammates" framing. Revisit only if multi-user ops becomes a need. |
+| C: "The Loft" | **NO-GO 🚫** | Parked. Friendly but toy-like. Keep as fallback if Bullpen feels overengineered. |
 
-## Phase 1: Core Data Flow — **GO** ✅
-Approved to begin as soon as Phase 0 exits.
+## Roadmap Phases
 
-| Item | Decision | Rationale |
+| Phase | Verdict | Notes |
 |---|---|---|
-| Backend: Gateway adapter | GO | Sessions list + history + send. Keep the adapter thin — don't over-abstract. |
-| Frontend: Session sidebar | GO | Start with a simple list; filters can come in a second pass within Phase 1. |
-| Frontend: Chat panel | GO | Messages + tool events. Tool events should be collapsible from day one — don't bolt it on later. |
-| Frontend: Message send | GO | Basic input bar. No rich formatting in MVP. |
+| Phase 0: Foundation | **GO ✅** | In progress. Waiting on Backend (API contract), Designer (tokens), Frontend (scaffold). No blockers. |
+| Phase 1: Core Data Flow | **GO ✅** | Approved to start as soon as Phase 0 exits. Keep gateway adapter thin — no over-abstraction. |
+| Phase 2: Agent Office Panel | **GO (conditional) ⏳** | Approved in principle. Final GO after Phase 1 ships and we verify data flow is stable. |
+| Phase 3: Polish | **NO-GO 🚫** | Premature. Mobile is deferred. Revisit after Phase 2. |
+| Post-MVP | **NO-GO 🚫** | Backlog. No work until MVP ships and we get real usage feedback. |
 
-## Phase 2: Agent Office Panel — **GO (conditional)** ⏳
-Approved in principle. Final GO after Phase 1 exit criteria are met.
+## Standing Directives
 
-| Item | Decision | Rationale |
-|---|---|---|
-| Backend: Presence stream | GO | WebSocket presence is core to the concept. |
-| Designer: Agent card design | GO | This is where "The Bullpen" identity lives. Cards should feel like desk nameplates — avatar, name, role, status lamp. |
-| Frontend: Agent grid | GO | Simple responsive grid. Isometric layout is post-MVP. |
-| Frontend: Card → session nav | GO | Essential for the "walk up to their desk" interaction. |
+1. **Gateway token server-side only** — non-negotiable. Must be verified in code review before any deploy.
+2. **Tool-call events collapsible from day one** — don't ship a wall of noise.
+3. **Desktop-first** — single operator on tailnet. Mobile is a distraction right now.
+4. **Warm neutrals, not corporate blue** — "The Bullpen" palette. Designer owns specifics.
+5. **Thin adapter pattern** — Backend should wrap Gateway RPC simply. No ORM-like layers.
 
-## Phase 3: Polish & Responsive — **NO-GO (premature)** 🚫
-Not approved yet. Revisit after Phase 2 delivers.
+## Next Review Gate
 
-| Item | Decision | Rationale |
-|---|---|---|
-| Mobile/tablet layout | NO-GO | Desktop-first for a single-operator tailnet tool. Mobile is nice-to-have, not blocking. |
-| Scroll/loading/error UX | Deferred | Important but scope it during Phase 2, not now. |
-| QA pass | Deferred | Meaningless until features exist. |
-
-## Post-MVP — **NO-GO** 🚫
-Backlog stays backlog. No work until MVP ships.
-
----
-
-## Standing Notes
-- **Token security is non-negotiable.** Gateway token must never touch the browser. Verify in Phase 1 code review.
-- **Keep scope tight.** Every "quick addition" costs a cycle. If it's not on the roadmap, it waits.
-- **Ship ugly, then polish.** Functional MVP > pixel-perfect vaporware.
+After Phase 0 exit criteria are met (API contract + scaffold + design tokens all delivered).
