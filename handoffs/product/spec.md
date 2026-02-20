@@ -75,3 +75,22 @@ A dashboard that visualizes OpenClaw agents as office teammates with avatars, li
 5. Status changes (idle→thinking→tool→idle) reflect within 2 seconds.
 6. Gateway token never exposed to browser (verified in code review).
 7. Layout is usable on desktop viewport (≥1024px).
+
+---
+
+## Current Phase (Cycle 3)
+
+**Phase 0: Foundation** is nearing completion:
+- ✅ **Backend:** API contract documented (endpoint specs, SSE events, retry policy)
+- ✅ **Designer:** Visual direction + component specs delivered ("The Bullpen" warm palette)
+- 🟡 **Frontend:** App scaffold in progress (expected within 1 day)
+
+**Phase 0 Exit Gate:** Once Frontend scaffold is running, all three phase-0 tasks complete. Phase 1 (Core Data Flow) will begin immediately.
+
+**Owner Assignments:**
+- **Product:** Continuous cycle monitoring, phase gate reviews, risk tracking
+- **Backend Engineer:** TASK-004 (Phase 1) — implement Gateway adapter, BFF route handlers, SSE fan-out
+- **Designer:** TASK-008 (Phase 2) — agent card design refinements, tablet responsive spec
+- **Frontend Engineer:** TASK-003 (Cycle 3) → TASK-005/006/007 (Phase 1) — scaffold, sidebar, chat, input, office panel (parallel with Backend)
+
+**No blockers.** All roles have clear outputs and acceptance criteria.

@@ -1,27 +1,71 @@
-# Bug Triage — Debugger
+# Triage Report — Cycle 1
+> Generated: 2026-02-21 01:50 AM (Europe/Moscow)
 
-> Last updated: 2026-02-21 01:32 (Cycle 1)
+## Summary
+Pre-implementation analysis. No active bugs, but three spec observations flagged by QA that require clarification before development.
 
-## Status: No open bugs
+---
 
-No implementation exists yet — tester has filed only pre-implementation observations.
+## Issue: OBS-1 — Gateway SDK API Contract Unconfirmed
+**Severity:** LOW | **Status:** OPEN | **Phase:** Design
 
-## Observation Analysis
+### Root Cause
+Frontend plan assumes gateway RPC method signatures (e.g., `subscribeToEvents`, `listSessions`) but SDK is not yet finalized. This is normal pre-implementation, but mismatches will cascade into BFF integration.
 
-### OBS-1: Gateway SDK docs pending — LOW
-**Root cause:** SDK method signatures unconfirmed; BFF event translation layer can't be finalized.
-**Impact:** Integration mismatches at BFF ↔ Gateway boundary.
-**Action:** No fix needed now. Will become blocking when backend implements WS connection. Monitor.
+### Impact Path
+1. BFF spec (event-model.md) defines gateway event types as "subject to SDK confirmation"
+2. Frontend (component-map.md) expects SSE events with specific shapes (presence, message, tool_event, session_update)
+3. If gateway SDK changes event structure, BFF translation layer must adapt
+4. Late changes = integration delays + potential client-side refactoring
 
-### OBS-2: SSE missed-event recovery undefined — MEDIUM (upgraded from LOW)
-**Root cause:** No API endpoint supports `since`-based replay beyond the 60s/100-event ring buffer. If a browser disconnects for >60s, it has no way to request missed events—only a full `/api/sessions` re-fetch, which misses intermediate messages.
-**Impact:** Users returning from sleep/background tab could see stale chat history until they manually switch sessions.
-**Action:** Backend should add `?since=<ts>` param to `/api/sessions/:key/history` or accept `Last-Event-ID` in the SSE reconnect that triggers a longer replay. Flag to backend team.
+### Evidence
+- event-model.md Table "Gateway → BFF Events": explicitly marked "subject to SDK confirmation"
+- No implementation yet, so risk is **deferred** but real
 
-### OBS-3: Viewport meta — INFO
-**Root cause:** Mobile deferred, but missing viewport meta causes zoom issues on tablets.
-**Impact:** Cosmetic only for Phase 3.
-**Action:** Frontend should add `<meta name="viewport" ...>` in RootLayout. Trivial fix.
+---
 
-## Next Cycle
-- Re-read bugs.md for any new entries once implementation begins.
+## Issue: OBS-2 — SSE Reconnect Gap Recovery Missing
+**Severity:** LOW | **Status:** OPEN | **Phase:** Backend/Frontend Integration
+
+### Root Cause
+Event-model.md specifies:
+- BFF buffers max 100 events / 60s during WS reconnect
+- Browser should "re-fetch on reconnect if gap > buffer window"
+
+**But:** No API contract endpoint supports this. Session list (`/api/sessions`) and message history (`/api/sessions/:key/history`) have no `since` parameter to fetch events after a specific timestamp.
+
+### Impact Path
+1. Client SSE disconnects for 90+ seconds
+2. Client reconnects, BFF has no buffered events (window elapsed)
+3. Client re-fetches `/api/sessions` and `/api/sessions/:key/history` (full state)
+4. **Gap:** If backend processed new events during the 90s, client may miss them (race condition)
+
+### Evidence
+- event-model.md: "re-fetch on reconnect if gap > buffer window" (no implementation detail)
+- component-map.md hooks: `useSessions`, `useHistory` — no temporal filtering
+- No contract for "events since timestamp" in BFF API spec
+
+---
+
+## Issue: OBS-3 — Mobile Viewport Meta Not Mentioned
+**Severity:** INFO | **Status:** DEFERRED | **Phase:** Frontend
+
+### Root Cause
+Spec explicitly defers mobile to Phase 4, but RootLayout (app/layout.tsx) should include proper viewport meta tag to avoid unexpected scaling on tablet browsers that land on the page.
+
+### Impact Path
+1. Tablet browser viewport defaults to 980px without meta tag
+2. 3-column desktop layout breaks on tablet (columns too narrow)
+3. User sees horizontal scroll or unexpected layout shift
+4. Deferred as non-critical, but quick fix prevents poor UX
+
+### Evidence
+- component-map.md: "Mobile explicitly deferred but no viewport meta mentioned"
+- RootLayout (app/layout.tsx) — will include meta setup but detail not yet documented
+
+---
+
+## Next Steps
+1. **Gateway SDK**: Confirm `subscribeToEvents` and event shapes → update event-model.md
+2. **SSE Gap Recovery**: Define `since` parameter for `/api/sessions` and `/api/sessions/:key/history`
+3. **Viewport Meta**: Add `<meta name="viewport" content="width=device-width, initial-scale=1" />` to RootLayout

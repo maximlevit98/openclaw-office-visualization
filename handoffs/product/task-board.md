@@ -1,14 +1,58 @@
 # Office Visualization — Task Board
 
-> Updated: 2026-02-21 (Cycle 2)
+> Updated: 2026-02-21 (Cycle 3 — autonomous update)
 
 ## 🔴 Blocked
 _(none)_
 
-## 🟡 In Progress
-_(none — awaiting role pickups)_
+## 🟡 In Progress (Phase 0)
 
-## 🟢 Ready (Phase 0)
+### TASK-001: Document Gateway API Contract
+- **Owner:** Backend Engineer
+- **Status:** 🟡 In Progress (assigned this cycle)
+- **Phase:** 0
+- **Priority:** 🔥 Critical path — blocks all data-dependent work
+- **Description:** Investigate OpenClaw Gateway RPC methods and WebSocket events. Document request/response shapes for: sessions list, session history, send message, presence stream.
+- **Output:** `handoffs/backend/api-contract.md`
+- **Acceptance Criteria:**
+  - All four endpoints documented with method names, params, and response schemas
+  - Example payloads included
+  - WebSocket event format specified (connection, subscription, event shape)
+- **Blockers:** None (Gateway is running and accessible)
+- **Producer note:** Keep the adapter thin — don't over-abstract.
+- **Expected completion:** Within 1 business day
+
+### TASK-002: Design System Foundations
+- **Owner:** Designer
+- **Status:** 🟡 In Progress (assigned this cycle)
+- **Phase:** 0
+- **Priority:** High — blocks all frontend component work
+- **Description:** Define color palette (warm neutrals — not corporate blue, per Producer), typography scale, spacing tokens, and component sketches for: session list item, chat message bubble, agent card.
+- **Output:** `handoffs/design/design-tokens.md` + `handoffs/design/components/`
+- **Acceptance Criteria:**
+  - Tokens defined as CSS custom properties or design-token JSON
+  - Sketches/wireframes for 3 core components (session item, message bubble, agent card)
+  - Light theme only for MVP
+  - Visual direction aligns with "The Bullpen" concept (warm, newsroom feel)
+- **Blockers:** None
+- **Expected completion:** Within 1 business day
+
+### TASK-003: Scaffold Frontend App
+- **Owner:** Frontend Engineer
+- **Status:** 🟡 In Progress (assigned this cycle)
+- **Phase:** 0
+- **Priority:** High — unblocks all frontend implementation
+- **Description:** Initialize project with chosen framework (recommend Vite + React or SvelteKit, per Producer). Set up dev server, folder structure, linting, and a "hello world" route.
+- **Output:** `handoffs/frontend/scaffold-notes.md` + working dev server
+- **Acceptance Criteria:**
+  - `npm run dev` starts local server
+  - Project structure documented
+  - Framework choice justified in scaffold notes
+- **Blockers:** None
+- **Note:** Can start in parallel with TASK-001 and TASK-002
+- **Expected completion:** Within 1 business day
+
+## 🟢 Ready
 
 ### TASK-001: Document Gateway API Contract
 - **Owner:** Backend Engineer
@@ -53,8 +97,33 @@ _(none — awaiting role pickups)_
 
 ### TASK-000: Product Spec, Roadmap & Task Board
 - **Owner:** Product
-- **Completed:** 2026-02-21
+- **Completed:** 2026-02-21 (Cycle 2)
 - **Output:** `spec.md`, `roadmap.md`, `task-board.md`
+
+### TASK-000B: Producer Approvals & Directives
+- **Owner:** Product (on behalf of Producer)
+- **Completed:** 2026-02-21 (Cycle 2)
+- **Output:** `producer/approval.md` with phase GO/NO-GO verdicts and standing directives
+
+### TASK-000C: Design System Definition ("The Bullpen")
+- **Owner:** Designer (on behalf of Producer)
+- **Completed:** 2026-02-21 (Cycle 2)
+- **Output:** `designer/visual-direction.md` with warm palette, typography, spacing, motion
+
+### TASK-000D: Frontend App Architecture & API Contract
+- **Owner:** Frontend Engineer + Backend Engineer (on behalf of Producer)
+- **Completed:** 2026-02-21 (Cycle 2)
+- **Output:** `frontend/app-architecture.md`, `backend/api-contract.md`, `backend/event-model.md`, `backend/security-notes.md`
+
+### TASK-000E: Component Specification
+- **Owner:** Designer (on behalf of Producer)
+- **Completed:** 2026-02-21 (Cycle 2)
+- **Output:** `designer/component-spec.md` with anatomy, responsive behavior, interaction notes
+
+### TASK-000F: Implementation Plan
+- **Owner:** Frontend Engineer (on behalf of Producer)
+- **Completed:** 2026-02-21 (Cycle 2)
+- **Output:** `frontend/implementation-plan.md` with phased dev schedule and risks
 
 ## Backlog (Phase 1+)
 

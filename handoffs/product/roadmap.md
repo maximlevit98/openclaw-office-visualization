@@ -1,16 +1,17 @@
 # Office Visualization — Roadmap
 
-> Last updated: 2026-02-21 (Cycle 2)
+> Last updated: 2026-02-21 (Cycle 3 — autonomous update)
 
 ## Phase 0: Foundation ← CURRENT (Approved ✅)
 **Goal:** Project scaffolding, data contract, design tokens.
-- [ ] Backend: Document Gateway RPC/WS API contract → `handoffs/backend/api-contract.md`
-- [ ] Designer: Design system tokens (warm neutrals palette, typography, spacing) + component sketches → `handoffs/design/`
-- [ ] Frontend: Scaffold app (framework choice, project structure, dev server) → `handoffs/frontend/`
-- [x] Product: Spec + roadmap + task board ✅
+- [x] Backend: Document Gateway RPC/WS API contract → `handoffs/backend/api-contract.md` ✅ (Cycle 2)
+- [x] Designer: Design system tokens (warm neutrals palette, typography, spacing) + component sketches → `handoffs/designer/visual-direction.md` ✅ (Cycle 2)
+- [ ] Frontend: Scaffold app (framework choice, project structure, dev server) → `handoffs/frontend/scaffold-notes.md` ⏳ (Cycle 3, in progress)
+- [x] Product: Spec + roadmap + task board ✅ (Cycle 2)
 
-**Exit criteria:** API contract documented, app scaffold running, design tokens defined.
-**Status:** Waiting on Backend, Designer, and Frontend deliverables. No blockers.
+**Exit criteria:** API contract documented ✅, app scaffold running ⏳, design tokens defined ✅.
+**Status:** Awaiting Frontend scaffold delivery. No blockers. On track for Phase 0 exit by end of Cycle 3.
+**Note:** Backend and Designer have already delivered Phase 0 outputs in Cycle 2. Frontend working on scaffold now.
 
 ## Phase 1: Core Data Flow (Approved ✅)
 **Goal:** Sessions list + chat history rendering with real data.
