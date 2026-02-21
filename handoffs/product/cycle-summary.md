@@ -1,15 +1,16 @@
-# Cycle Summary — 2026-02-21 (Cycle 6 — Phase 2 Execution)
+# Cycle Summary — 2026-02-21 (Cycle 7 — Phase 2 Final Push)
 
-> **Status:** Phase 1 SHIPPED | Phase 2 IN FLIGHT | Next: 3 Concrete Coding Tasks
+> **Status:** Phase 1 SHIPPED | Phase 2 NEARLY DONE (1 of 3 tasks shipped, 2 remaining)
 
 ## Executive Summary
 
-**Phase 1 is approved and shipped. Phase 2 work starts NOW.**
+**Phase 2 is 1/3 complete. SSE stream shipped. Final 2 tasks ready to ship in 40 minutes.**
 
-✅ **Phase 1 Complete:** Producer approval at 04:10. All 7 acceptance criteria verified.  
-🟡 **Phase 2 In Flight:** 3 concrete coding tasks (SSE stream, presence hook, filters)  
-🚀 **Timeline:** 2–3 hours to Phase 2 exit (this cycle)  
-🎯 **Build Status:** 481ms, 48/48 tests passing, zero errors
+✅ **Phase 1 Complete:** Producer approved, all criteria verified  
+✅ **TASK-020b DONE:** Real SSE stream committed (4aea0a2)  
+🟡 **TASK-020a + 021a:** Ready to start (20 min + 15 min)  
+🚀 **Timeline:** 40 min to Phase 2 exit gate  
+🎯 **Build Status:** 511ms, zero errors
 
 ---
 
@@ -172,57 +173,61 @@ npm test __tests__/
 
 ---
 
-## PHASE 2 EXECUTION (Cycle 6 — THIS CYCLE)
+## PHASE 2 FINAL PUSH (Cycle 7 — THIS CYCLE)
 
-### 🎯 TOP 3 CODING TASKS (Pick up NOW)
+### ✅ TASK-020b: Real SSE Stream (DONE)
+- **Commit:** 4aea0a2 "feat: real SSE stream with agent presence"
+- **Time:** Completed (~1 hour ago)
+- **What Ships:** Real-time agent presence streaming via SSE
+- **Verified:** Build 511ms, zero errors
 
-**See:** `handoffs/product/CYCLE_6_EXECUTION.md` for detailed implementation guide
+### 🎯 REMAINING TASKS (40 min total)
 
-#### Task 1: TASK-020b (Backend) — Real SSE Stream Handler
-- **File:** `app/api/stream/route.ts`
-- **Time:** 45 min
-- **What:** Replace heartbeat-only stub with real agent presence events
-- **Verify:** `curl http://localhost:3000/api/stream | head -5` shows JSON events
-- **Owner:** Backend Engineer
-
-#### Task 2: TASK-020a (Frontend) — usePresence() Hook
-- **File:** `hooks/usePresence.ts` (create new)
-- **Time:** 45 min
-- **What:** React hook that subscribes to SSE and updates agent list in real-time
-- **Verify:** `npm run build` succeeds, hook imports cleanly
+#### TASK-020a: usePresence() Hook
+- **File:** `hooks/usePresence.ts` (create)
+- **Time:** 20 min
+- **What:** React hook for SSE subscription
+- **Template:** See `CYCLE_7_EXECUTION.md` (copy/paste code)
 - **Owner:** Frontend Engineer
 
-#### Task 3: TASK-021a (Frontend) — Session Filter UI
-- **File:** `components/SessionFilter.tsx` (create new)
-- **Time:** 45 min
-- **What:** Filter component for session sidebar (by kind, status, search text)
-- **Verify:** `npm run build` succeeds, no console errors
+#### TASK-021a: Session Filter Integration
+- **File:** `components/Sidebar.tsx` (edit)
+- **Time:** 15 min
+- **What:** Wire SessionSearch component into Sidebar
+- **Instructions:** See `CYCLE_7_EXECUTION.md` (integration steps)
 - **Owner:** Frontend Engineer
 
-### 🚀 EXECUTION CHECKLIST
+### 📋 EXECUTION CHECKLIST (Cycle 7)
 
-**Backend (45 min):**
-- [ ] Edit `app/api/stream/route.ts`
-- [ ] Import `listAgents` from gateway-adapter
-- [ ] Send initial agent list + 30s heartbeat
-- [ ] Test: curl shows real events
-- [ ] Run: `npm run build` (succeeds <500ms)
-- [ ] Commit: `feat: real SSE stream with agent presence`
+**Frontend Engineer (35 min):**
+- [ ] Create `hooks/usePresence.ts` (template in CYCLE_7_EXECUTION.md)
+- [ ] Verify: `npm run build` succeeds
+- [ ] Commit: `feat: add usePresence hook for real-time agent updates (TASK-020a)`
+- [ ] Edit `components/Sidebar.tsx` to import + use SessionSearch
+- [ ] Verify: `npm run build` succeeds
+- [ ] Commit: `feat: add session search filtering (TASK-021a)`
 
-**Frontend (90 min, can be parallel):**
-- [ ] Create `hooks/usePresence.ts` with EventSource logic
-- [ ] Create `components/SessionFilter.tsx` with checkbox UI
-- [ ] Test: `npm run build` succeeds
-- [ ] Run: `npm test` (all pass)
-- [ ] Commit: `feat: add presence hook and session filters`
+**QA/Tester (5 min):**
+- [ ] `npm run dev`
+- [ ] Verify: Sidebar shows search input
+- [ ] Verify: Agent list appears
+- [ ] Verify: No console errors
 
-**Product/QA (30 min):**
+**Product (5 min):**
 - [ ] Review 2 commits
-- [ ] Manual smoke test: `npm run dev` + verify no errors
-- [ ] Verify: Test count stable (≥48 passing)
-- [ ] Sign off: Phase 2a ready for Phase 2b
+- [ ] Verify: Build <520ms
+- [ ] Verify: No new TypeScript errors
+- [ ] Approve: Phase 2 gate ready
 
-**Timeline:** 2–3 hours → Phase 2 exit gate ready
+**Timeline:**
+| Time | What |
+|06:04 | This plan + frontend starts |
+|06:20 | Hook done + committed |
+|06:35 | Filter integration done + committed |
+|06:40 | QA check |
+|06:45 | Phase 2 GATE READY |
+
+**Total:** 40 minutes
 
 ---
 
@@ -252,80 +257,66 @@ npm test __tests__/
 
 ---
 
-## Communication — Cycle 6 Execution
+## Communication — Cycle 7 Final Push
 
-### 🎯 To Backend Engineer (START NOW)
+### 🎯 To Frontend Engineer (START NOW — 40 min)
 
-**Task:** TASK-020b — Real SSE Stream Handler  
-**File:** `app/api/stream/route.ts`  
-**Time:** 45 minutes  
-**Details:** `handoffs/product/CYCLE_6_EXECUTION.md` → TASK-020b section
+**TASK-020a:** usePresence() Hook (20 min)
+- **File:** `hooks/usePresence.ts`
+- **Template:** `CYCLE_7_EXECUTION.md` (copy/paste ready)
+- **Then commit:** `feat: add usePresence hook for real-time agent updates (TASK-020a)`
 
-**Action:**
-1. Edit `app/api/stream/route.ts`
-2. Import `listAgents` from `lib/gateway-adapter`
-3. Send initial agent list + 30s heartbeat
-4. Test: `curl http://localhost:3000/api/stream | head -5`
-5. Commit: `feat: real SSE stream with agent presence`
+**TASK-021a:** Session Filter Integration (15 min)
+- **File:** `components/Sidebar.tsx`
+- **Action:** Import SessionSearch + integrate
+- **Instructions:** `CYCLE_7_EXECUTION.md`
+- **Then commit:** `feat: add session search filtering (TASK-021a)`
 
-**Unblocks:** Frontend usePresence hook  
-**Timeline:** 45 min → code ready for review
+**Verify each time:** `npm run build` (should be 511–520ms)
 
 ---
 
-### 🎯 To Frontend Engineer (START NOW)
+### ✅ To Backend Engineer (STANDBY)
 
-**Tasks:** 
-1. TASK-020a — usePresence() hook (45 min)
-2. TASK-021a — SessionFilter component (45 min)
+**Status:** TASK-020b ✅ DONE & SHIPPED (commit 4aea0a2)
 
-**Details:** `handoffs/product/CYCLE_6_EXECUTION.md` → TASK-020a & TASK-021a sections
-
-**Action:**
-1. Create `hooks/usePresence.ts` (EventSource subscription)
-2. Create `components/SessionFilter.tsx` (checkbox filters)
-3. Test: `npm run build` succeeds
-4. Commit: `feat: add presence hook and session filters`
-
-**Can Start:** Parallel to backend (no dependencies)  
-**Timeline:** 90 min total → UI complete
+Next phases: 
+- Phase 3: Message validation + rate limiting
+- Can start prep work anytime
 
 ---
 
-### ✅ To QA/Tester (STANDBY)
+### 🟡 To QA/Tester (STANDBY → 5 min)
 
-**Status:** Phase 1 complete. Standby for Phase 2.  
-**Next Action:** Once Phase 2 code is ready, run smoke tests:
+**After frontend commits:**
 ```bash
 npm run dev
-# Verify: No console errors
-# Verify: Agent list updates (if stream connected)
-# Verify: Filter UI renders
-npm test  # Verify: tests still pass
+# Verify in browser:
+#   - Sidebar has search input
+#   - Search filters sessions
+#   - Agent list appears
+#   - No console errors
 ```
 
 ---
 
-### ✅ To Product/Producer (REVIEW MODE)
+### 📊 To Product (REVIEW MODE)
 
-**Current:** Phase 1 APPROVED + SHIPPED  
-**Today:** Phase 2 in execution (3 tasks, ~2–3 hours)  
-**Action:** Review commits as they land
+**Action:** Monitor for commits
 
-**Acceptance:**
-- [ ] Build succeeds (<500ms)
-- [ ] Tests pass (≥48)
-- [ ] No regressions in coverage/performance
-- [ ] Commits are clean + well-message
+**When 2 commits land:**
+- [ ] Build: `npm run build` (should be <520ms)
+- [ ] Errors: `npm run build` output shows none
+- [ ] Files: Only hooks/ + Sidebar.tsx modified
+- [ ] Approve: Phase 2 gate ready
 
-**Timeline:** Phase 2 exit gate ready by 07:00–08:00 AM
+**Timeline:** Phase 2 exit by 06:45 AM ✅
 
 ---
 
-### 🟢 To All (Key Reference)
+### 🚀 Reference
 
-**See:** `handoffs/product/CYCLE_6_EXECUTION.md`  
-**For:** Detailed implementation + copy/paste commands
+**See:** `handoffs/product/CYCLE_7_EXECUTION.md` for detailed steps
 
 ---
 

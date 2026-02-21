@@ -1,73 +1,70 @@
 # Office Visualization — Execution Task Board
 
-> Updated: 2026-02-21 05:04 (Cycle 6 — Phase 2 Execution)
+> Updated: 2026-02-21 06:04 (Cycle 7 — Phase 2 Final Push)
 
-## 🎯 PHASE 2: LIVE PRESENCE & POLISH (IN FLIGHT)
+## 🎯 PHASE 2: LIVE PRESENCE & POLISH (NEARLY DONE)
 
-**Goal:** Add real-time agent presence, session filters, ship Phase 2.
+**Goal:** Ship final 2 tasks → Phase 2 EXIT GATE
 
-### Current Status
-- ✅ **Phase 0 Complete:** Scaffold, API contract, design tokens
-- ✅ **Phase 1 SHIPPED:** Gateway adapter, API routes, frontend UI, acceptance tests PASS, producer approval DONE
-- 🟡 **Phase 2 In Flight:** Real SSE streaming, usePresence hook, session filters
-- 🎯 **Timeline:** 2–3 hours (this cycle)
+### Current Status (Cycle 7)
+- ✅ **Phase 1 Complete:** Shipped + producer approved
+- ✅ **TASK-020b DONE:** Real SSE stream (committed 4aea0a2)
+- 🟡 **TASK-020a READY:** usePresence hook (20 min)
+- 🟡 **TASK-021a READY:** Session filter integration (15 min)
+- 🎯 **Timeline:** 40 minutes to Phase 2 exit
 
 ---
 
-## 🟡 IN PROGRESS (Cycle 6 — THIS CYCLE)
+## 🟡 IN PROGRESS (Cycle 7 — FINAL PUSH)
 
-### TASK-020a: `usePresence()` React Hook
+### ✅ TASK-020b: Real SSE Stream Handler
+- **Status:** COMPLETE & COMMITTED (4aea0a2)
+- **Delivered:** 
+  - Real agent presence streaming (not heartbeat-only stub)
+  - Fetches initial agent list on client connect
+  - Broadcasts agent_status events with full agent data
+  - 30-second heartbeat + proper cleanup
+  - Error handling + logging
+- **Verified:** Build 511ms, zero errors
+
+---
+
+### 🟡 TASK-020a: `usePresence()` React Hook (START NOW)
 - **Owner:** Frontend Engineer
-- **Phase:** 2 (live presence)
-- **Priority:** 🔥 CRITICAL — enables live agent updates
-- **File Target:** `hooks/usePresence.ts` (create new)
-- **What:** React hook that subscribes to `/api/stream` SSE and updates agent list in real-time
+- **Status:** READY TO START
+- **Time:** 20 minutes
+- **File:** Create `hooks/usePresence.ts`
+- **What:** React hook that connects to `/api/stream` SSE
+  - EventSource("/api/stream") subscription
+  - JSON parsing of incoming events
+  - Updates agents when type === "agent_status"
+  - Cleanup on unmount
+  - Returns { agents, connected, error }
+- **Code Template:** See `CYCLE_7_EXECUTION.md` (copy/paste ready)
 - **Acceptance:**
-  - [ ] Connects to `/api/stream` on component mount
-  - [ ] Parses SSE messages as JSON
-  - [ ] Updates agents when `type === "agent_status"`
-  - [ ] Closes connection on unmount (no leaks)
-  - [ ] Provides `connected` + `error` status
-  - **Test:** `npm run build` succeeds
-- **Timeline:** 45 minutes
-- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-020a section)
+  - [ ] Connects to SSE on mount
+  - [ ] Parses JSON events correctly
+  - [ ] Updates agent list in real-time
+  - [ ] Closes on unmount (no leaks)
+  - [ ] `npm run build` succeeds
 
 ---
 
-### TASK-020b: Real SSE Stream Handler
-- **Owner:** Backend Engineer
-- **Phase:** 2 (live presence)
-- **Priority:** 🔥 CRITICAL — provides live data
-- **File Target:** `app/api/stream/route.ts` (enhance existing)
-- **What:** Replace heartbeat-only stub with real agent presence streaming
-- **Current:** Stub sends only `{"type":"heartbeat"}`
-- **Enhanced:** Sends initial agent list + 30s heartbeat keepalive
-- **Acceptance:**
-  - [ ] Fetches initial agent list on client connect
-  - [ ] Sends each agent as `{"type":"agent_status","agent":{...}}`
-  - [ ] Includes 30-second heartbeat
-  - [ ] Closes on client disconnect (no leaks)
-  - **Test:** `curl http://localhost:3000/api/stream | head -5` shows events
-- **Timeline:** 45 minutes
-- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-020b section)
-
----
-
-### TASK-021a: Session Filter UI Component
+### 🟡 TASK-021a: Session Filter Integration (START AFTER 020a)
 - **Owner:** Frontend Engineer
-- **Phase:** 2 (polish)
-- **Priority:** IMPORTANT — filtering UX
-- **File Target:** `components/SessionFilter.tsx` (create new)
-- **What:** Filter UI for session sidebar (by kind: main/background, by status, search text)
+- **Status:** READY TO START (SessionSearch component exists)
+- **Time:** 15 minutes
+- **What:** Wire existing SessionSearch component into Sidebar
+  - Import SessionSearch in Sidebar.tsx
+  - Pass sessions array + callbacks
+  - Show filtered results
+- **Code:** See `CYCLE_7_EXECUTION.md` (integration instructions)
 - **Acceptance:**
-  - [ ] Renders checkboxes for session kinds
-  - [ ] Renders checkboxes for statuses
-  - [ ] Text input for name search
-  - [ ] Calls `onFiltersChange` callback
-  - [ ] Shows count in labels (e.g., "Main (3)")
-  - **Test:** `npm run build` succeeds
-- **Timeline:** 45 minutes
-- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-021a section)
+  - [ ] SessionSearch renders in Sidebar
+  - [ ] Search filters sessions by label/key
+  - [ ] Selected session still works
+  - [ ] `npm run build` succeeds
+  - [ ] No console errors
 
 ---
 
