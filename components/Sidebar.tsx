@@ -21,6 +21,16 @@ export function Sidebar({
   error,
 }: SidebarProps) {
   const [isTabletExpanded, setIsTabletExpanded] = useState(false);
+  const [filterText, setFilterText] = useState("");
+
+  // Filter sessions by label or key
+  const filteredSessions = filterText.trim()
+    ? sessions.filter((s) =>
+        (s.label || s.key)
+          .toLowerCase()
+          .includes(filterText.toLowerCase())
+      )
+    : sessions;
 
   return (
     <>
@@ -35,10 +45,31 @@ export function Sidebar({
           <p style={styles.subtitle}>Office</p>
         </div>
 
+        <div style={styles.filterContainer}>
+          <input
+            type="text"
+            placeholder="Filter sessions…"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            style={styles.filterInput}
+            aria-label="Filter sessions"
+          />
+          {filterText && (
+            <button
+              onClick={() => setFilterText("")}
+              style={styles.filterClear}
+              aria-label="Clear filter"
+              title="Clear"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         <nav style={styles.nav}>
           <h3 style={styles.sectionTitle}>Sessions</h3>
           <SessionList
-            sessions={sessions}
+            sessions={filteredSessions}
             selectedSession={selectedSession}
             onSelectSession={onSelectSession}
             loading={loading}
@@ -103,10 +134,31 @@ export function Sidebar({
               </button>
             </div>
 
+            <div style={styles.filterContainer}>
+              <input
+                type="text"
+                placeholder="Filter sessions…"
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                style={styles.filterInput}
+                aria-label="Filter sessions"
+              />
+              {filterText && (
+                <button
+                  onClick={() => setFilterText("")}
+                  style={styles.filterClear}
+                  aria-label="Clear filter"
+                  title="Clear"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <nav style={styles.nav}>
               <h3 style={styles.sectionTitle}>Sessions</h3>
               <SessionList
-                sessions={sessions}
+                sessions={filteredSessions}
                 selectedSession={selectedSession}
                 onSelectSession={(key) => {
                   onSelectSession(key);
@@ -295,5 +347,42 @@ const styles = {
     fontSize: "12px",
     color: COLORS.bgSurface,
     opacity: 0.9,
+  } as React.CSSProperties,
+
+  filterContainer: {
+    position: "relative" as const,
+    padding: `${SPACING.md} ${SPACING.md}`,
+    borderBottom: `1px solid ${COLORS.borderDefault}`,
+    display: "flex",
+    alignItems: "center",
+    gap: SPACING.sm,
+  } as React.CSSProperties,
+
+  filterInput: {
+    flex: 1,
+    padding: `${SPACING.sm} ${SPACING.md}`,
+    backgroundColor: COLORS.bgSurface,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: RADIUS.sm,
+    fontSize: "14px",
+    color: COLORS.textPrimary,
+    transition: `all 150ms ease-out`,
+    fontFamily: "inherit",
+  } as React.CSSProperties,
+
+  filterClear: {
+    width: "28px",
+    height: "28px",
+    padding: 0,
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: RADIUS.sm,
+    fontSize: "14px",
+    color: COLORS.textTertiary,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: `all 150ms ease-out`,
   } as React.CSSProperties,
 } as const;

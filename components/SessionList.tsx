@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Session } from "@/lib/types";
 import { COLORS, SPACING, RADIUS, TRANSITIONS } from "@/lib/design-tokens";
 
@@ -16,6 +17,8 @@ export function SessionList({
   onSelectSession,
   loading,
 }: SessionListProps) {
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+
   if (loading) {
     return <p style={styles.loadingText}>Loading sessions...</p>;
   }
@@ -30,9 +33,14 @@ export function SessionList({
         <li key={session.key}>
           <button
             onClick={() => onSelectSession(session.key)}
+            onMouseEnter={() => setHoveredKey(session.key)}
+            onMouseLeave={() => setHoveredKey(null)}
             style={{
               ...styles.item,
               ...(selectedSession === session.key ? styles.itemActive : {}),
+              ...(hoveredKey === session.key && selectedSession !== session.key
+                ? styles.itemHover
+                : {}),
             }}
           >
             <span style={styles.name}>{session.label || session.key}</span>
@@ -77,6 +85,12 @@ const styles = {
     borderLeftWidth: "3px",
     color: COLORS.textPrimary,
     fontWeight: 500,
+  } as React.CSSProperties,
+
+  itemHover: {
+    backgroundColor: COLORS.bgPrimary,
+    borderLeftColor: COLORS.borderDefault,
+    transition: `all ${TRANSITIONS.fast}`,
   } as React.CSSProperties,
 
   name: {
