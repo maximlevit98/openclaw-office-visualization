@@ -1,11 +1,36 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 7 — Sidebar Filter & Interactions)  
-> **Implementation Status:** ✅ Cycle 7 Filter & Session Row Interactions Complete
+> Last updated: 2026-02-21 (Cycle 8 — Session Unread Indicators)  
+> **Implementation Status:** ✅ Cycle 8 Unread Indicators Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+
+---
+
+## 🎨 **CYCLE 8 DELTA — Session Unread Indicators**
+
+**Direct Code Impact (Feb 21, 07:10 Moscow)**
+
+### Session Type Extension
+- ✅ **unreadCount field:** Added optional `unreadCount?: number` to Session interface
+- ✅ **Backward compatible:** Field is optional, existing code continues to work
+- ✅ **Ready for API integration:** Backend can provide unread counts
+
+### SessionList Component
+- ✅ **Unread dot indicator:** 8px pulsing circle (unread-dot color) displays when unreadCount > 0
+- ✅ **Pulse animation:** 2s infinite pulse animation draws attention to unread sessions
+- ✅ **Proper positioning:** Dot appears before session name in left-to-right layout
+- ✅ **Accessibility:** Tooltip shows unread count on hover
+- ✅ **Item layout improved:** Better spacing with gap, improved text overflow handling
+
+**Testing:**
+- ✅ Build succeeds (560ms, zero errors)
+- ✅ TypeScript types updated and verified
+- ✅ Unread indicator displays correctly
+- ✅ Desktop + tablet rendering verified
+- ✅ Pulse animation smooth and subtle
 
 ---
 
