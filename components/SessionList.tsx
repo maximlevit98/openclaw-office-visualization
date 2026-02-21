@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Session } from "@/lib/types";
 import { COLORS, SPACING, RADIUS, TRANSITIONS } from "@/lib/design-tokens";
+import { formatTimestamp } from "@/lib/utils";
 
 interface SessionListProps {
   sessions: Session[];
@@ -43,13 +44,22 @@ export function SessionList({
                 : {}),
             }}
           >
-            {session.unreadCount && session.unreadCount > 0 && (
-              <div style={styles.unreadDot} title={`${session.unreadCount} unread`} />
-            )}
-            <span style={styles.name}>{session.label || session.key}</span>
-            <span style={styles.meta}>
-              {session.activeMinutes ? `${session.activeMinutes}m` : ""}
-            </span>
+            <div style={styles.itemContent}>
+              <div style={styles.itemHeader}>
+                {session.unreadCount && session.unreadCount > 0 && (
+                  <div style={styles.unreadDot} title={`${session.unreadCount} unread`} />
+                )}
+                <span style={styles.name}>{session.label || session.key}</span>
+              </div>
+              {session.lastMessage && (
+                <div style={styles.itemMeta}>
+                  <span style={styles.preview}>{session.lastMessage}</span>
+                  {session.lastMessageTime && (
+                    <span style={styles.time}>{formatTimestamp(session.lastMessageTime)}</span>
+                  )}
+                </div>
+              )}
+            </div>
           </button>
         </li>
       ))}
@@ -66,12 +76,11 @@ const styles = {
 
   item: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column" as const,
+    alignItems: "flex-start",
     width: "100%",
     padding: SPACING.md,
     marginBottom: SPACING.sm,
-    gap: SPACING.sm,
     backgroundColor: "transparent",
     border: `1px solid transparent`,
     borderLeft: `3px solid transparent`,
@@ -133,5 +142,44 @@ const styles = {
     backgroundColor: COLORS.unreadDot,
     flexShrink: 0,
     animation: "pulse 2s infinite",
+  } as React.CSSProperties,
+
+  itemContent: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.sm,
+    flex: 1,
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  itemHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: SPACING.sm,
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  itemMeta: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: SPACING.sm,
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  preview: {
+    fontSize: "12px",
+    color: COLORS.textSecondary,
+    flex: 1,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
+  } as React.CSSProperties,
+
+  time: {
+    fontSize: "11px",
+    color: COLORS.textTertiary,
+    flexShrink: 0,
+    whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 };

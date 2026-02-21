@@ -1,10 +1,20 @@
 import { getSessionHistory, type Message } from "@/lib/gateway-adapter";
 import { NextRequest, NextResponse } from "next/server";
-import { getQueryParam, getPathParam, errorResponse, successResponse } from "@/lib/api-utils";
+import {
+  getPathParamValidated,
+  getQueryParamAsPositiveInt,
+  VALIDATION_LIMITS,
+  errorResponse,
+  successResponse,
+} from "@/lib/api-utils";
 
 /**
  * GET /api/sessions/[key]/history
  * Fetch message history for a session
+ * 
+ * Validation:
+ * - Path param 'key' must be present and <= 256 chars
+ * - Query param 'limit' must be a positive integer between 1-1000 (optional)
  */
 export async function GET(
   request: NextRequest,
@@ -12,18 +22,29 @@ export async function GET(
 ): Promise<NextResponse<Message[] | { error: string; details?: string }>> {
   try {
     const { key } = await params;
-    getPathParam({ key }, "key", true);
+    const sessionKey = getPathParamValidated({ key }, "key", { required: true });
 
-    const limit = getQueryParam(request, "limit", false);
-    const history = await getSessionHistory(
-      key,
-      limit ? parseInt(limit, 10) : undefined
-    );
+    // Validate limit if provided
+    const limit = getQueryParamAsPositiveInt(request, "limit", {
+      required: false,
+      min: VALIDATION_LIMITS.MIN_LIMIT,
+      max: VALIDATION_LIMITS.MAX_LIMIT,
+    });
+
+    const history = await getSessionHistory(sessionKey, limit || undefined);
 
     return successResponse(history);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Failed to fetch session history:", message);
-    return errorResponse("Failed to fetch session history", message, 500);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    // Return 400 for validation errors, 500 for other errors
+    const isValidationError = errorMessage.includes("must be") || 
+                              errorMessage.includes("exceeds") ||
+                              errorMessage.includes("between");
+    
+    const status = isValidationError ? 400 : 500;
+    
+    console.error("Failed to fetch session history:", errorMessage);
+    return errorResponse("Failed to fetch session history", errorMessage, status);
   }
 }

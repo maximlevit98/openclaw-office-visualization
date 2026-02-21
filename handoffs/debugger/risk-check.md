@@ -1,5 +1,5 @@
-# Risk Check — Cycle 3
-> Updated: 2026-02-21 02:50 AM (Europe/Moscow) | Robustness improvements applied
+# Risk Check — Cycle 4
+> Updated: 2026-02-21 03:50 AM (Europe/Moscow) | Validation + error handling improvements
 
 ---
 
@@ -138,6 +138,25 @@ Event-model.md specifies 100 event / 60s buffer, but doesn't define behavior for
 | Buffer edge cases | event-model.md | LOW | MEDIUM | BFF | Define overflow policy |
 
 ---
+
+---
+
+## Cycle 4 Improvements (Validation & Error Handling)
+
+### Risk Mitigation Added
+- **Input Validation** — All parameters validated with bounds checking
+- **Clear Error Messages** — 400/500 HTTP status codes distinguish error types
+- **DoS Prevention** — Path params bounded, message size capped, limit constrained
+- **Boundary Protection** — Timeout (0-3600s), message (1-10000 chars), limit (1-1000)
+
+### Risk Reduction
+| Risk | Before | After | Change |
+|---|---|---|---|
+| Invalid params reach gateway | HIGH | LOW | Validated before sending |
+| Memory exhaustion from large messages | MEDIUM | LOW | 10KB max message size |
+| Gateway overload from bad limits | MEDIUM | LOW | Limit capped at 1000 |
+| Unclear error messages to clients | MEDIUM | LOW | Clear validation errors with 400 status |
+| Path param attacks | MEDIUM | LOW | 256-char limit on session keys |
 
 ---
 
