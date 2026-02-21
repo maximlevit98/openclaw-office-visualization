@@ -28,6 +28,8 @@ interface ControlJobDetail extends ControlJobListItem {
 }
 
 interface CronRunEntry {
+  ts?: number;
+  action?: string;
   status?: string;
   durationMs?: number;
   summary?: string;
@@ -45,6 +47,11 @@ interface CronRunEntry {
 interface LastRunResponse {
   id: string;
   lastRun: CronRunEntry | null;
+}
+
+interface RunHistoryResponse {
+  id: string;
+  entries: CronRunEntry[];
 }
 
 interface RunJobResponse {
@@ -86,6 +93,38 @@ interface CreateProjectAgentResponse {
   agent: OpenClawAgent;
 }
 
+interface AgentChatResponse {
+  ok: boolean;
+  agentId: string;
+  sessionId?: string;
+  status?: string;
+  summary?: string;
+  reply: string;
+  runId?: string;
+  model?: string;
+  provider?: string;
+  durationMs?: number;
+  usage?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+    total?: number;
+  };
+}
+
+interface AgentChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  text: string;
+  atMs: number;
+}
+
+interface AgentChatSessionState {
+  sessionId?: string;
+  messages: AgentChatMessage[];
+}
+
 interface MainResizeState {
   x: number;
   width: number;
@@ -112,6 +151,11 @@ interface LiveActivityPayload {
   message?: string;
 }
 
+interface ActivityLogEntry extends LiveActivityEntry {
+  eventAtMs: number;
+  eventKey: string;
+}
+
 const statusColors: Record<string, string> = {
   ok: COLORS.statusIdle,
   error: COLORS.statusError,
@@ -122,15 +166,19 @@ const CONTROL_MAIN_SPLIT_KEY = "openclaw-control-main-split-width";
 const CONTROL_MAIN_MIN_WIDTH = 420;
 const CONTROL_MAIN_MAX_WIDTH = 2000;
 const CONTROL_MAIN_RESIZER_WIDTH = 16;
+const CHAT_ONLY_MODE = true;
+const CONTROL_CHAT_STATE_KEY = "openclaw-control-agent-chat-state-v1";
 
 const CONTROL_TEXT = {
   en: {
     title: "AGENT CONTROL PANEL",
     subtitle: "Multi-project admin: projects, agents, prompts, and runs in one place",
     liveFeed: "Live Agent Activity",
+    liveProcessForJob: "Live Process: Selected Job",
     liveConnected: "Live: connected",
     liveReconnecting: "Live: reconnecting...",
     liveNoItems: "No agent activity yet.",
+    liveNoEventsForJob: "No realtime events for this job yet.",
     liveUpdatedAt: "Updated",
     liveStreamError: "Live stream issue",
     noActivityText: "No details yet.",
@@ -146,6 +194,9 @@ const CONTROL_TEXT = {
     refreshAll: "Refresh All",
     backToOffice: "Back to Office",
     jobs: "Jobs",
+    agents: "Agents",
+    jobsForAgent: "Jobs For Agent",
+    noAgentsInScope: "No agents in selected scope.",
     showingAllJobs: "Showing all jobs",
     loadingJobs: "Loading jobs...",
     noJobs: "No jobs found.",
@@ -156,13 +207,27 @@ const CONTROL_TEXT = {
     runNow: "Run Now",
     running: "Running...",
     savePrompt: "Save Prompt",
+    unsavedPrompt: "Unsaved prompt changes",
     saving: "Saving...",
+    agentChatPanel: "Agent Chat",
+    agentChatHint: "Send direct correction to the selected agent (Cursor/Codex-style intervention).",
+    agentChatEmpty: "No messages yet. Send first correction.",
+    agentChatInputPlaceholder: "Example: Focus only on /control scroll bug and return concise patch summary.",
+    newChat: "New Chat",
+    chatReset: "Agent chat reset.",
+    sendMessage: "Send",
+    sendingMessage: "Sending...",
+    selectAgentForChat: "Select agent/job to open chat.",
+    chatSession: "session",
     agentChatPrompt: "Agent Chat / Prompt",
     showRunDetails: "Show Last Run Details",
     hideRunDetails: "Hide Last Run Details",
     expandLastRun: "Expand Last Run",
     collapseLastRun: "Close Expanded View",
     lastRun: "Last Run",
+    runHistory: "Run History",
+    loadingRunHistory: "Loading run history...",
+    noRunHistory: "No run history yet.",
     noSummary: "No summary.",
     noRunData: "No run data yet.",
     noRunHint: "Try Run Now or Refresh All to load fresh run data.",
@@ -225,9 +290,11 @@ const CONTROL_TEXT = {
     title: "ПАНЕЛЬ УПРАВЛЕНИЯ АГЕНТАМИ",
     subtitle: "Управление проектами, агентами, промптами и запусками в одном месте",
     liveFeed: "Активность агентов (Live)",
+    liveProcessForJob: "Live-процесс: выбранная задача",
     liveConnected: "Live: подключено",
     liveReconnecting: "Live: переподключение...",
     liveNoItems: "Пока нет активности агентов.",
+    liveNoEventsForJob: "Для этой задачи пока нет realtime-событий.",
     liveUpdatedAt: "Обновлено",
     liveStreamError: "Проблема live-потока",
     noActivityText: "Деталей пока нет.",
@@ -243,6 +310,9 @@ const CONTROL_TEXT = {
     refreshAll: "Обновить всё",
     backToOffice: "Назад в офис",
     jobs: "Задачи",
+    agents: "Агенты",
+    jobsForAgent: "Задачи агента",
+    noAgentsInScope: "Нет агентов в выбранной области.",
     showingAllJobs: "Показаны все задачи",
     loadingJobs: "Загрузка задач...",
     noJobs: "Задачи не найдены.",
@@ -253,13 +323,27 @@ const CONTROL_TEXT = {
     runNow: "Запустить",
     running: "Запуск...",
     savePrompt: "Сохранить промпт",
+    unsavedPrompt: "Есть несохранённые изменения промпта",
     saving: "Сохранение...",
+    agentChatPanel: "Чат агента",
+    agentChatHint: "Отправьте прямую корректировку выбранному агенту (в стиле Cursor/Codex).",
+    agentChatEmpty: "Сообщений пока нет. Отправьте первую корректировку.",
+    agentChatInputPlaceholder: "Например: Сфокусируйся только на баге со скроллом /control и верни краткий patch summary.",
+    newChat: "Новый чат",
+    chatReset: "Чат агента сброшен.",
+    sendMessage: "Отправить",
+    sendingMessage: "Отправка...",
+    selectAgentForChat: "Выберите агента/задачу, чтобы открыть чат.",
+    chatSession: "сессия",
     agentChatPrompt: "Чат агента / Промпт",
     showRunDetails: "Показать детали последнего запуска",
     hideRunDetails: "Скрыть детали последнего запуска",
     expandLastRun: "Развернуть последний запуск",
     collapseLastRun: "Закрыть развернутый вид",
     lastRun: "Последний запуск",
+    runHistory: "История запусков",
+    loadingRunHistory: "Загрузка истории запусков...",
+    noRunHistory: "История запусков пока пуста.",
     noSummary: "Нет сводки.",
     noRunData: "Данных о запуске пока нет.",
     noRunHint: "Нажмите «Запустить» или «Обновить всё», чтобы получить свежие данные запуска.",
@@ -328,8 +412,10 @@ export default function ControlPage() {
   const [detail, setDetail] = useState<ControlJobDetail | null>(null);
   const [promptDraft, setPromptDraft] = useState("");
   const [lastRun, setLastRun] = useState<CronRunEntry | null>(null);
+  const [runHistory, setRunHistory] = useState<CronRunEntry[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [loadingRunHistory, setLoadingRunHistory] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string>("");
@@ -339,12 +425,15 @@ export default function ControlPage() {
   const [isResizingMain, setIsResizingMain] = useState(false);
   const mainResizeStateRef = useRef<MainResizeState | null>(null);
   const [activityEntries, setActivityEntries] = useState<LiveActivityEntry[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [activityConnected, setActivityConnected] = useState(false);
   const [activityUpdatedAtMs, setActivityUpdatedAtMs] = useState<number | null>(null);
   const [activityError, setActivityError] = useState("");
+  const activityFingerprintRef = useRef<Map<string, string>>(new Map());
 
   const [projects, setProjects] = useState<ControlProjectListItem[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [projectDetail, setProjectDetail] = useState<ControlProjectDetail | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingProjectDetail, setLoadingProjectDetail] = useState(false);
@@ -355,6 +444,10 @@ export default function ControlPage() {
   const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [showRunDetails, setShowRunDetails] = useState(false);
   const [showRunExpanded, setShowRunExpanded] = useState(false);
+  const [chatByAgent, setChatByAgent] = useState<Record<string, AgentChatSessionState>>({});
+  const [chatDraftByAgent, setChatDraftByAgent] = useState<Record<string, string>>({});
+  const [sendingChat, setSendingChat] = useState(false);
+  const chatListRef = useRef<HTMLDivElement | null>(null);
 
   const [projectNameDraft, setProjectNameDraft] = useState("");
   const [projectIdDraft, setProjectIdDraft] = useState("");
@@ -401,6 +494,82 @@ export default function ControlPage() {
     () => visibleJobs.find((job) => job.id === selectedId) || null,
     [visibleJobs, selectedId]
   );
+
+  const latestActivityByJobId = useMemo(() => {
+    const map = new Map<string, LiveActivityEntry>();
+    for (const entry of activityEntries) {
+      if (!map.has(entry.jobId)) {
+        map.set(entry.jobId, entry);
+      }
+    }
+    return map;
+  }, [activityEntries]);
+
+  const visibleAgents = useMemo(() => {
+    const byId = new Map<
+      string,
+      {
+        id: string;
+        label: string;
+        model?: string;
+        emoji?: string;
+        jobs: ControlJobListItem[];
+      }
+    >();
+
+    for (const agent of projectDetail?.agents || []) {
+      byId.set(agent.id, {
+        id: agent.id,
+        label: agent.identityName || agent.name || agent.id,
+        model: agent.model,
+        emoji: agent.identityEmoji,
+        jobs: [],
+      });
+    }
+
+    for (const job of visibleJobs) {
+      const existing = byId.get(job.agentId) || {
+        id: job.agentId,
+        label: job.agentId,
+        jobs: [],
+      };
+      existing.jobs.push(job);
+      byId.set(job.agentId, existing);
+    }
+
+    return Array.from(byId.values())
+      .map((agent) => ({
+        ...agent,
+        jobs: [...agent.jobs].sort((a, b) => {
+          const aTs = a.lastRunAtMs || 0;
+          const bTs = b.lastRunAtMs || 0;
+          return bTs - aTs;
+        }),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [projectDetail, visibleJobs]);
+
+  const selectedAgentJobs = useMemo(() => {
+    if (!selectedAgentId) return [];
+    const found = visibleAgents.find((agent) => agent.id === selectedAgentId);
+    return found ? found.jobs : [];
+  }, [visibleAgents, selectedAgentId]);
+
+  const selectedAgent = useMemo(
+    () => visibleAgents.find((agent) => agent.id === selectedAgentId) || null,
+    [visibleAgents, selectedAgentId]
+  );
+
+  const activeChatSession = selectedAgentId ? chatByAgent[selectedAgentId] : undefined;
+  const activeChatMessages = activeChatSession?.messages || [];
+  const activeChatDraft = selectedAgentId ? chatDraftByAgent[selectedAgentId] || "" : "";
+
+  const selectedJobActivity = useMemo(
+    () => activityLog.filter((entry) => entry.jobId === selectedId).slice(0, 16),
+    [activityLog, selectedId]
+  );
+
+  const isPromptDirty = Boolean(detail && promptDraft !== (detail.prompt || ""));
 
   useEffect(() => {
     void Promise.all([loadJobs(), loadProjects()]);
@@ -486,8 +655,10 @@ export default function ControlPage() {
   useEffect(() => {
     if (visibleJobs.length === 0) {
       setSelectedId("");
+      setSelectedAgentId("");
       setDetail(null);
       setLastRun(null);
+      setRunHistory([]);
       return;
     }
 
@@ -500,6 +671,26 @@ export default function ControlPage() {
     if (!selectedId) return;
     setShowRunExpanded(false);
     void loadDetail(selectedId);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!visibleAgents.length) {
+      setSelectedAgentId("");
+      return;
+    }
+
+    if (!selectedAgentId || !visibleAgents.some((agent) => agent.id === selectedAgentId)) {
+      const fallback = selectedJob?.agentId || visibleAgents[0].id;
+      setSelectedAgentId(fallback);
+    }
+  }, [visibleAgents, selectedAgentId, selectedJob]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const timer = window.setInterval(() => {
+      void loadRunHistory(selectedId, { silent: true });
+    }, 8000);
+    return () => window.clearInterval(timer);
   }, [selectedId]);
 
   useEffect(() => {
@@ -519,10 +710,32 @@ export default function ControlPage() {
       try {
         const payload = JSON.parse(event.data) as LiveActivityPayload;
         if (payload.type === "snapshot") {
-          setActivityEntries(
-            Array.isArray(payload.entries) ? payload.entries.slice(0, 80) : []
-          );
-          setActivityUpdatedAtMs(payload.atMs || Date.now());
+          const nextEntries = Array.isArray(payload.entries) ? payload.entries.slice(0, 80) : [];
+          const atMs = payload.atMs || Date.now();
+          setActivityEntries(nextEntries);
+          setActivityUpdatedAtMs(atMs);
+          setActivityLog((previous) => {
+            const additions: ActivityLogEntry[] = [];
+            const seen = activityFingerprintRef.current;
+            const isFirstSnapshot = seen.size === 0;
+
+            for (const entry of nextEntries) {
+              const fingerprint = `${entry.runAtMs || entry.lastRunAtMs || 0}|${entry.status}|${entry.excerpt || ""}`;
+              const prev = seen.get(entry.jobId);
+              seen.set(entry.jobId, fingerprint);
+              if (prev === fingerprint) continue;
+              if (isFirstSnapshot && !prev) continue;
+
+              additions.push({
+                ...entry,
+                eventAtMs: atMs,
+                eventKey: `${entry.jobId}:${fingerprint}`,
+              });
+            }
+
+            if (additions.length === 0) return previous;
+            return [...additions, ...previous].slice(0, 220);
+          });
           setActivityError("");
           return;
         }
@@ -549,6 +762,29 @@ export default function ControlPage() {
       source.close();
     };
   }, [t.liveStreamError]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(CONTROL_CHAT_STATE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      setChatByAgent(normalizeChatStore(parsed));
+    } catch {
+      // Ignore invalid local chat state.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(CONTROL_CHAT_STATE_KEY, JSON.stringify(chatByAgent));
+  }, [chatByAgent]);
+
+  useEffect(() => {
+    const node = chatListRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [selectedAgentId, activeChatMessages.length]);
 
   useEffect(() => {
     if (!showRunDetails) {
@@ -625,7 +861,7 @@ export default function ControlPage() {
     setLoadingDetail(true);
     setError("");
     try {
-      const [job, run] = await Promise.all([
+      const [job, run, history] = await Promise.all([
         fetchJSON<ControlJobDetail>(`/api/control/jobs/${encodeURIComponent(id)}`, {
           timeoutMs: 15000,
           retries: 1,
@@ -636,16 +872,60 @@ export default function ControlPage() {
           retries: 1,
           skipCache: true,
         }),
+        fetchJSON<RunHistoryResponse>(
+          `/api/control/jobs/${encodeURIComponent(id)}/history?limit=24`,
+          {
+            timeoutMs: 15000,
+            retries: 1,
+            skipCache: true,
+          }
+        ),
       ]);
 
       setDetail(job);
       setPromptDraft(job.prompt || "");
       setLastRun(run.lastRun || null);
+      setRunHistory(Array.isArray(history.entries) ? history.entries : []);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t.failedLoadJobDetail;
       setError(msg);
+      setRunHistory([]);
     } finally {
       setLoadingDetail(false);
+    }
+  };
+
+  const loadRunHistory = async (
+    id: string,
+    options?: {
+      silent?: boolean;
+    }
+  ) => {
+    const silent = Boolean(options?.silent);
+    if (!silent) {
+      setLoadingRunHistory(true);
+      setError("");
+    }
+
+    try {
+      const history = await fetchJSON<RunHistoryResponse>(
+        `/api/control/jobs/${encodeURIComponent(id)}/history?limit=24`,
+        {
+          timeoutMs: 15000,
+          retries: 1,
+          skipCache: true,
+        }
+      );
+      setRunHistory(Array.isArray(history.entries) ? history.entries : []);
+    } catch (err) {
+      if (!silent) {
+        const msg = err instanceof Error ? err.message : t.failedLoadDetail;
+        setError(msg);
+      }
+    } finally {
+      if (!silent) {
+        setLoadingRunHistory(false);
+      }
     }
   };
 
@@ -655,6 +935,9 @@ export default function ControlPage() {
     await Promise.all([loadJobs(), loadProjects()]);
     if (selectedProjectId) {
       await loadProjectDetail(selectedProjectId);
+    }
+    if (selectedId) {
+      await loadDetail(selectedId);
     }
   };
 
@@ -785,13 +1068,154 @@ export default function ControlPage() {
       );
       setLastRun(result.lastRun || null);
       setMessage(t.runSnapshotUpdated);
-      await loadJobs();
+      await Promise.all([loadJobs(), loadRunHistory(detail.id, { silent: true })]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t.failedRunJob;
       setError(msg);
     } finally {
       setRunning(false);
     }
+  };
+
+  const handleAgentSelect = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    const preferred = visibleJobs
+      .filter((job) => job.agentId === agentId)
+      .sort((a, b) => (b.lastRunAtMs || 0) - (a.lastRunAtMs || 0))[0];
+    if (preferred) {
+      setSelectedId(preferred.id);
+    } else {
+      setSelectedId("");
+    }
+  };
+
+  const handleChatDraftChange = (value: string) => {
+    if (!selectedAgentId) return;
+    setChatDraftByAgent((previous) => ({
+      ...previous,
+      [selectedAgentId]: value,
+    }));
+  };
+
+  const handleSendAgentMessage = async () => {
+    if (!selectedAgentId) {
+      setError(t.selectAgentForChat);
+      return;
+    }
+
+    const text = activeChatDraft.trim();
+    if (!text) return;
+
+    const agentId = selectedAgentId;
+    const userMessage: AgentChatMessage = {
+      id: `user:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+      role: "user",
+      text,
+      atMs: Date.now(),
+    };
+
+    setChatDraftByAgent((previous) => ({
+      ...previous,
+      [agentId]: "",
+    }));
+    setChatByAgent((previous) => {
+      const current = previous[agentId] || { messages: [] };
+      return {
+        ...previous,
+        [agentId]: {
+          ...current,
+          messages: [...current.messages, userMessage].slice(-80),
+        },
+      };
+    });
+
+    setSendingChat(true);
+    setError("");
+    setMessage("");
+
+    const sessionId = chatByAgent[agentId]?.sessionId;
+
+    try {
+      const response = await postJSON<AgentChatResponse>(
+        `/api/control/agents/${encodeURIComponent(agentId)}/chat`,
+        {
+          message: text,
+          sessionId,
+        },
+        {
+          timeoutMs: 240000,
+          retries: 0,
+        }
+      );
+
+      const meta: string[] = [];
+      if (response.model) meta.push(response.model);
+      if (response.durationMs) meta.push(formatDuration(response.durationMs));
+      if (typeof response.usage?.total === "number") {
+        meta.push(`${response.usage.total} tok`);
+      }
+      const assistantText = response.reply?.trim() || response.summary || t.noSummary;
+      const finalText = meta.length > 0 ? `${assistantText}\n\n[${meta.join(" | ")}]` : assistantText;
+      const assistantMessage: AgentChatMessage = {
+        id: `assistant:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+        role: "assistant",
+        text: finalText,
+        atMs: Date.now(),
+      };
+
+      setChatByAgent((previous) => {
+        const current = previous[agentId] || { messages: [] };
+        return {
+          ...previous,
+          [agentId]: {
+            sessionId: response.sessionId || current.sessionId,
+            messages: [...current.messages, assistantMessage].slice(-80),
+          },
+        };
+      });
+
+      await Promise.all([
+        loadJobs(),
+        selectedId ? loadRunHistory(selectedId, { silent: true }) : Promise.resolve(),
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t.failedRunJob;
+      setError(msg);
+
+      const systemMessage: AgentChatMessage = {
+        id: `system:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+        role: "system",
+        text: msg,
+        atMs: Date.now(),
+      };
+      setChatByAgent((previous) => {
+        const current = previous[agentId] || { messages: [] };
+        return {
+          ...previous,
+          [agentId]: {
+            ...current,
+            messages: [...current.messages, systemMessage].slice(-80),
+          },
+        };
+      });
+    } finally {
+      setSendingChat(false);
+    }
+  };
+
+  const handleResetAgentChat = () => {
+    if (!selectedAgentId) return;
+    setChatByAgent((previous) => {
+      const next = { ...previous };
+      delete next[selectedAgentId];
+      return next;
+    });
+    setChatDraftByAgent((previous) => {
+      const next = { ...previous };
+      delete next[selectedAgentId];
+      return next;
+    });
+    setMessage(t.chatReset);
   };
 
   const handleMainResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -908,59 +1332,119 @@ export default function ControlPage() {
       <main style={mainLayoutStyle}>
         <section style={styles.sidebar}>
           <div style={styles.sectionHeaderRow}>
-            <h2 style={styles.sectionTitle}>{t.jobs}</h2>
-            <span style={styles.pillCount}>{visibleJobs.length}</span>
+            <h2 style={styles.sectionTitle}>{CHAT_ONLY_MODE ? t.agents : t.jobs}</h2>
+            <span style={styles.pillCount}>{CHAT_ONLY_MODE ? visibleAgents.length : visibleJobs.length}</span>
           </div>
 
-          <p style={styles.dimText}>
-            {scopeToProject && selectedProject
-              ? t.showingJobsForProject(selectedProject.id)
-              : t.showingAllJobs}
-          </p>
-
-          {loadingList ? (
-            <p style={styles.dimText}>{t.loadingJobs}</p>
-          ) : visibleJobs.length === 0 ? (
+          {!CHAT_ONLY_MODE && (
             <p style={styles.dimText}>
-              {scopeToProject ? t.noJobsForSelectedAgents : t.noJobs}
+              {scopeToProject && selectedProject
+                ? t.showingJobsForProject(selectedProject.id)
+                : t.showingAllJobs}
             </p>
-          ) : (
-            <div style={styles.jobList}>
-              {visibleJobs.map((job) => {
-                const isSelected = job.id === selectedId;
-                const statusKey = (job.lastStatus || "").toLowerCase();
-                const statusColor = statusColors[statusKey] || COLORS.textTertiary;
-                const projectId = projectByAgentId.get(job.agentId);
-                return (
-                  <button
-                    key={job.id}
-                    onClick={() => setSelectedId(job.id)}
-                    style={{
-                      ...styles.jobRow,
-                      ...(isSelected ? styles.jobRowSelected : null),
-                    }}
-                  >
-                    <div style={styles.jobRowTop}>
-                      <span style={styles.jobName}>{job.roleAlias || job.name}</span>
-                      <span style={{ ...styles.statusDot, backgroundColor: statusColor }} />
-                    </div>
-                    <p style={styles.jobMeta}>
-                      {t.labelJob}: {job.name}
-                    </p>
-                    <p style={styles.jobMeta}>
-                      {t.labelAgent}: {job.agentId}
-                    </p>
-                    <p style={styles.jobMeta}>
-                      {t.labelProject}: {projectId || t.noDataMarker}
-                    </p>
-                    <p style={styles.jobMeta}>
-                      {t.labelSchedule}: {job.schedule}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
           )}
+
+          <div style={styles.agentScopePanel}>
+            {!CHAT_ONLY_MODE && (
+              <div style={styles.sectionHeaderRow}>
+                <h3 style={styles.sectionTitle}>{t.agents}</h3>
+                <span style={styles.pillCount}>{visibleAgents.length}</span>
+              </div>
+            )}
+            {visibleAgents.length === 0 ? (
+              <p style={styles.dimText}>{t.noAgentsInScope}</p>
+            ) : (
+              <div style={styles.agentButtonList}>
+                {visibleAgents.map((agent) => {
+                  const isSelectedAgent = selectedAgentId === agent.id;
+                  const firstJob = agent.jobs[0];
+                  const liveItem = agent.jobs
+                    .map((job) => latestActivityByJobId.get(job.id))
+                    .find((entry): entry is LiveActivityEntry => Boolean(entry));
+                  const statusKey = (
+                    liveItem?.status ||
+                    firstJob?.lastStatus ||
+                    "idle"
+                  ).toLowerCase();
+                  const statusColor = statusColors[statusKey] || COLORS.textTertiary;
+
+                  return (
+                    <button
+                      key={agent.id}
+                      style={{
+                        ...styles.agentButton,
+                        ...(isSelectedAgent ? styles.agentButtonSelected : null),
+                      }}
+                      onClick={() => handleAgentSelect(agent.id)}
+                    >
+                      <div style={styles.jobRowTop}>
+                        <span style={styles.jobName}>
+                          {agent.emoji ? `${agent.emoji} ` : ""}
+                          {agent.label}
+                        </span>
+                        <span style={{ ...styles.statusDot, backgroundColor: statusColor }} />
+                      </div>
+                      <p style={styles.jobMeta}>
+                        {t.labelAgent}: {agent.id}
+                      </p>
+                      <p style={styles.jobMeta}>
+                        {t.jobs}: {agent.jobs.length} | {t.labelModel}: {agent.model || t.noDataMarker}
+                      </p>
+                      <p style={styles.liveExcerpt}>{liveItem?.excerpt || t.noActivityText}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {!CHAT_ONLY_MODE &&
+            (loadingList ? (
+              <p style={styles.dimText}>{t.loadingJobs}</p>
+            ) : visibleJobs.length === 0 ? (
+              <p style={styles.dimText}>
+                {scopeToProject ? t.noJobsForSelectedAgents : t.noJobs}
+              </p>
+            ) : (
+              <div style={styles.jobList}>
+                {visibleJobs.map((job) => {
+                  const isSelected = job.id === selectedId;
+                  const statusKey = (job.lastStatus || "").toLowerCase();
+                  const statusColor = statusColors[statusKey] || COLORS.textTertiary;
+                  const projectId = projectByAgentId.get(job.agentId);
+                  return (
+                    <button
+                      key={job.id}
+                      onClick={() => {
+                        setSelectedId(job.id);
+                        setSelectedAgentId(job.agentId);
+                      }}
+                      style={{
+                        ...styles.jobRow,
+                        ...(isSelected ? styles.jobRowSelected : null),
+                      }}
+                    >
+                      <div style={styles.jobRowTop}>
+                        <span style={styles.jobName}>{job.roleAlias || job.name}</span>
+                        <span style={{ ...styles.statusDot, backgroundColor: statusColor }} />
+                      </div>
+                      <p style={styles.jobMeta}>
+                        {t.labelJob}: {job.name}
+                      </p>
+                      <p style={styles.jobMeta}>
+                        {t.labelAgent}: {job.agentId}
+                      </p>
+                      <p style={styles.jobMeta}>
+                        {t.labelProject}: {projectId || t.noDataMarker}
+                      </p>
+                      <p style={styles.jobMeta}>
+                        {t.labelSchedule}: {job.schedule}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
         </section>
 
         {!isNarrow && (
@@ -979,7 +1463,8 @@ export default function ControlPage() {
         )}
 
         <section style={styles.content}>
-          <div style={styles.livePanel}>
+          {!CHAT_ONLY_MODE && (
+            <div style={styles.livePanel}>
             <div style={styles.sectionHeaderRow}>
               <h3 style={styles.sectionTitle}>{t.liveFeed}</h3>
               <span
@@ -1016,7 +1501,10 @@ export default function ControlPage() {
                         ...styles.liveRow,
                         ...(selectedFromFeed ? styles.liveRowSelected : null),
                       }}
-                      onClick={() => setSelectedId(entry.jobId)}
+                      onClick={() => {
+                        setSelectedId(entry.jobId);
+                        setSelectedAgentId(entry.agentId);
+                      }}
                     >
                       <div style={styles.liveRowTop}>
                         <span style={styles.liveTitle}>
@@ -1037,9 +1525,112 @@ export default function ControlPage() {
                 })}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
-          {!selectedJob ? (
+          {!CHAT_ONLY_MODE && selectedJob ? (
+            <div style={styles.livePanel}>
+              <div style={styles.sectionHeaderRow}>
+                <h3 style={styles.sectionTitle}>{t.liveProcessForJob}</h3>
+                <span style={styles.pillCount}>{selectedJobActivity.length}</span>
+              </div>
+              <p style={styles.dimText}>
+                {t.labelJob}: {selectedJob.name} | {t.labelAgent}: {selectedJob.agentId}
+              </p>
+              {selectedJobActivity.length === 0 ? (
+                <p style={styles.dimText}>{t.liveNoEventsForJob}</p>
+              ) : (
+                <div style={styles.processLogList}>
+                  {selectedJobActivity.map((entry) => (
+                    <div key={entry.eventKey} style={styles.processLogRow}>
+                      <div style={styles.liveRowTop}>
+                        <span style={styles.liveStatus}>{entry.status || t.noDataMarker}</span>
+                        <span style={styles.jobMeta}>
+                          {formatTimestamp(entry.eventAtMs, locale)}
+                        </span>
+                      </div>
+                      <p style={styles.liveExcerpt}>{entry.excerpt || t.noActivityText}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {CHAT_ONLY_MODE ? (
+            <div style={styles.chatOnlyShell}>
+              <div style={styles.sectionHeaderRow}>
+                <h3 style={styles.sectionTitle}>{t.agentChatPanel}</h3>
+                <div style={styles.inlineActions}>
+                  <span style={styles.pillCount}>{activeChatMessages.length}</span>
+                  <button
+                    style={styles.secondaryButton}
+                    onClick={handleResetAgentChat}
+                    disabled={!selectedAgentId}
+                  >
+                    {t.newChat}
+                  </button>
+                </div>
+              </div>
+              <p style={styles.dimText}>{t.agentChatHint}</p>
+              {selectedAgent ? (
+                <p style={styles.jobMeta}>
+                  {t.labelAgent}: {selectedAgent.id}
+                  {activeChatSession?.sessionId
+                    ? ` | ${t.chatSession}: ${activeChatSession.sessionId}`
+                    : ""}
+                </p>
+              ) : (
+                <p style={styles.dimText}>{t.selectAgentForChat}</p>
+              )}
+
+              {activeChatMessages.length === 0 ? (
+                <p style={styles.dimText}>{t.agentChatEmpty}</p>
+              ) : (
+                <div ref={chatListRef} style={styles.chatMessageList}>
+                  {activeChatMessages.map((messageEntry) => (
+                    <div
+                      key={messageEntry.id}
+                      style={{
+                        ...styles.chatMessage,
+                        ...(messageEntry.role === "user"
+                          ? styles.chatMessageUser
+                          : messageEntry.role === "assistant"
+                            ? styles.chatMessageAssistant
+                            : styles.chatMessageSystem),
+                      }}
+                    >
+                      <p style={styles.chatMessageRole}>{messageEntry.role.toUpperCase()}</p>
+                      <pre style={styles.chatMessageText}>{messageEntry.text}</pre>
+                      <p style={styles.chatMessageTime}>
+                        {formatTimestamp(messageEntry.atMs, locale)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <textarea
+                style={styles.chatInput}
+                value={activeChatDraft}
+                onChange={(event) => handleChatDraftChange(event.target.value)}
+                placeholder={t.agentChatInputPlaceholder}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void handleSendAgentMessage();
+                  }
+                }}
+              />
+              <button
+                style={styles.actionButton}
+                onClick={() => void handleSendAgentMessage()}
+                disabled={!selectedAgentId || sendingChat || !activeChatDraft.trim()}
+              >
+                {sendingChat ? t.sendingMessage : t.sendMessage}
+              </button>
+            </div>
+          ) : !selectedJob ? (
             <p style={styles.dimText}>{t.selectJob}</p>
           ) : loadingDetail && !detail ? (
             <p style={styles.dimText}>{t.loadingJobDetail}</p>
@@ -1064,22 +1655,133 @@ export default function ControlPage() {
                   <button
                     style={styles.actionButton}
                     onClick={handleSavePrompt}
-                    disabled={saving}
+                    disabled={saving || !isPromptDirty}
                   >
                     {saving ? t.saving : t.savePrompt}
                   </button>
                 </div>
               </div>
 
-              <label style={styles.label} htmlFor="prompt-editor">
-                {t.agentChatPrompt}
-              </label>
-              <textarea
-                id="prompt-editor"
-                style={styles.promptEditor}
-                value={promptDraft}
-                onChange={(event) => setPromptDraft(event.target.value)}
-              />
+              <div style={styles.agentScopePanel}>
+                <div style={styles.sectionHeaderRow}>
+                  <h3 style={styles.sectionTitle}>{t.jobsForAgent}</h3>
+                  <span style={styles.pillCount}>{selectedAgentJobs.length}</span>
+                </div>
+                {selectedAgentJobs.length === 0 ? (
+                  <p style={styles.dimText}>{t.noJobsForSelectedAgents}</p>
+                ) : (
+                  <div style={styles.agentJobStrip}>
+                    {selectedAgentJobs.map((job) => {
+                      const isCurrent = job.id === selectedId;
+                      const jobStatus = (job.lastStatus || "idle").toLowerCase();
+                      const jobStatusColor = statusColors[jobStatus] || COLORS.textTertiary;
+                      return (
+                        <button
+                          key={job.id}
+                          style={{
+                            ...styles.agentJobButton,
+                            ...(isCurrent ? styles.agentJobButtonSelected : null),
+                          }}
+                          onClick={() => {
+                            setSelectedId(job.id);
+                            setSelectedAgentId(job.agentId);
+                          }}
+                        >
+                          <div style={styles.jobRowTop}>
+                            <span style={styles.jobName}>{job.roleAlias || job.name}</span>
+                            <span style={{ ...styles.statusDot, backgroundColor: jobStatusColor }} />
+                          </div>
+                          <p style={styles.jobMeta}>{job.name}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  ...styles.editorWorkspace,
+                  ...(isNarrow ? styles.editorWorkspaceNarrow : null),
+                }}
+              >
+                <div style={styles.promptPane}>
+                  <label style={styles.label} htmlFor="prompt-editor">
+                    {t.agentChatPrompt}
+                  </label>
+                  {isPromptDirty ? <p style={styles.dimText}>{t.unsavedPrompt}</p> : null}
+                  <textarea
+                    id="prompt-editor"
+                    style={styles.promptEditor}
+                    value={promptDraft}
+                    onChange={(event) => setPromptDraft(event.target.value)}
+                  />
+                </div>
+
+                <aside style={styles.chatPane}>
+                  <div style={styles.sectionHeaderRow}>
+                    <h3 style={styles.sectionTitle}>{t.agentChatPanel}</h3>
+                    <span style={styles.pillCount}>{activeChatMessages.length}</span>
+                  </div>
+                  <p style={styles.dimText}>{t.agentChatHint}</p>
+                  {selectedAgent ? (
+                    <p style={styles.jobMeta}>
+                      {t.labelAgent}: {selectedAgent.id}
+                      {activeChatSession?.sessionId
+                        ? ` | ${t.chatSession}: ${activeChatSession.sessionId}`
+                        : ""}
+                    </p>
+                  ) : (
+                    <p style={styles.dimText}>{t.selectAgentForChat}</p>
+                  )}
+
+                  {activeChatMessages.length === 0 ? (
+                    <p style={styles.dimText}>{t.agentChatEmpty}</p>
+                  ) : (
+                    <div ref={chatListRef} style={styles.chatMessageList}>
+                      {activeChatMessages.map((messageEntry) => (
+                        <div
+                          key={messageEntry.id}
+                          style={{
+                            ...styles.chatMessage,
+                            ...(messageEntry.role === "user"
+                              ? styles.chatMessageUser
+                              : messageEntry.role === "assistant"
+                                ? styles.chatMessageAssistant
+                                : styles.chatMessageSystem),
+                          }}
+                        >
+                          <p style={styles.chatMessageRole}>{messageEntry.role.toUpperCase()}</p>
+                          <pre style={styles.chatMessageText}>{messageEntry.text}</pre>
+                          <p style={styles.chatMessageTime}>
+                            {formatTimestamp(messageEntry.atMs, locale)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <textarea
+                    style={styles.chatInput}
+                    value={activeChatDraft}
+                    onChange={(event) => handleChatDraftChange(event.target.value)}
+                    placeholder={t.agentChatInputPlaceholder}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void handleSendAgentMessage();
+                      }
+                    }}
+                  />
+                  <button
+                    style={styles.actionButton}
+                    onClick={() => void handleSendAgentMessage()}
+                    disabled={!selectedAgentId || sendingChat || !activeChatDraft.trim()}
+                  >
+                    {sendingChat ? t.sendingMessage : t.sendMessage}
+                  </button>
+                </aside>
+              </div>
 
               <div style={styles.runActionsRow}>
                 <button
@@ -1103,7 +1805,7 @@ export default function ControlPage() {
                   <h3 style={styles.sectionTitle}>{t.lastRun}</h3>
                   {lastRun ? (
                     <>
-                      <p style={styles.dimText}>
+                      <p style={{ ...styles.dimText, fontWeight: 500, color: COLORS.textPrimary }}>
                         {t.labelStatus}: {lastRun.status || t.noDataMarker} | {t.labelDuration}:{" "}
                         {formatDuration(lastRun.durationMs)} | {t.labelAt}: {formatTimestamp(lastRun.runAtMs, locale)}
                       </p>
@@ -1121,6 +1823,41 @@ export default function ControlPage() {
                   )}
                 </div>
               )}
+
+              <div style={styles.runCard}>
+                <div style={styles.sectionHeaderRow}>
+                  <h3 style={styles.sectionTitle}>{t.runHistory}</h3>
+                  <span style={styles.pillCount}>{runHistory.length}</span>
+                </div>
+                {loadingRunHistory && runHistory.length === 0 ? (
+                  <p style={styles.dimText}>{t.loadingRunHistory}</p>
+                ) : runHistory.length === 0 ? (
+                  <p style={styles.dimText}>{t.noRunHistory}</p>
+                ) : (
+                  <div style={styles.historyList}>
+                    {runHistory.map((entry, index) => (
+                      <div
+                        key={`${entry.runAtMs || entry.ts || 0}:${entry.action || "run"}:${index}`}
+                        style={styles.historyRow}
+                      >
+                        <p style={styles.jobMeta}>
+                          {t.labelStatus}: {entry.status || t.noDataMarker} | {t.labelDuration}:{" "}
+                          {formatDuration(entry.durationMs)} | {t.labelAt}:{" "}
+                          {formatTimestamp(entry.runAtMs || entry.ts, locale)}
+                        </p>
+                        <p style={styles.jobMeta}>
+                          {t.labelTokens}: {entry.usage?.total_tokens ?? 0} ({t.labelIn}:{" "}
+                          {entry.usage?.input_tokens ?? 0}, {t.labelOut}:{" "}
+                          {entry.usage?.output_tokens ?? 0})
+                        </p>
+                        <p style={styles.liveExcerpt}>
+                          {buildRunExcerpt(entry.summary || entry.error) || t.noActivityText}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <p style={styles.dimText}>{t.failedLoadDetail}</p>
@@ -1315,6 +2052,57 @@ function formatDuration(ms?: number): string {
   if (ms < 1000) return `${ms}ms`;
   const sec = Math.round(ms / 1000);
   return `${sec}s`;
+}
+
+function buildRunExcerpt(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const line = value.trim().split(/\r?\n/, 1)[0];
+  if (!line) return undefined;
+  return line.length > 220 ? `${line.slice(0, 217)}...` : line;
+}
+
+function normalizeChatStore(raw: unknown): Record<string, AgentChatSessionState> {
+  if (!raw || typeof raw !== "object") return {};
+
+  const output: Record<string, AgentChatSessionState> = {};
+  const entries = Object.entries(raw as Record<string, unknown>);
+
+  for (const [agentId, value] of entries) {
+    if (typeof agentId !== "string" || !agentId.trim()) continue;
+    if (!value || typeof value !== "object") continue;
+
+    const candidate = value as Partial<AgentChatSessionState> & { messages?: unknown };
+    const sessionId =
+      typeof candidate.sessionId === "string" && candidate.sessionId.trim()
+        ? candidate.sessionId.trim()
+        : undefined;
+    const messagesSource = Array.isArray(candidate.messages) ? candidate.messages : [];
+    const messages = messagesSource
+      .map((entry): AgentChatMessage | null => {
+        if (!entry || typeof entry !== "object") return null;
+        const message = entry as Partial<AgentChatMessage>;
+        if (message.role !== "user" && message.role !== "assistant" && message.role !== "system") {
+          return null;
+        }
+        if (typeof message.text !== "string" || !message.text.trim()) return null;
+        return {
+          id:
+            typeof message.id === "string" && message.id.trim()
+              ? message.id
+              : `${message.role}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+          role: message.role,
+          text: message.text,
+          atMs: typeof message.atMs === "number" ? message.atMs : Date.now(),
+        };
+      })
+      .filter((entry): entry is AgentChatMessage => entry !== null)
+      .slice(-100);
+
+    if (!sessionId && messages.length === 0) continue;
+    output[agentId] = { sessionId, messages };
+  }
+
+  return output;
 }
 
 const styles = {
@@ -1745,6 +2533,41 @@ const styles = {
     gap: SPACING.sm,
   } as React.CSSProperties,
 
+  agentScopePanel: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.sm,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+  } as React.CSSProperties,
+
+  agentButtonList: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    maxHeight: "260px",
+    overflowY: "auto" as const,
+  } as React.CSSProperties,
+
+  agentButton: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.sm,
+    textAlign: "left" as const,
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "4px",
+  } as React.CSSProperties,
+
+  agentButtonSelected: {
+    backgroundColor: COLORS.accentPrimary,
+    boxShadow: SHADOWS.hover,
+  } as React.CSSProperties,
+
   liveStateBadge: {
     border: `1px solid ${COLORS.borderDefault}`,
     boxShadow: SHADOWS.card,
@@ -1768,6 +2591,24 @@ const styles = {
     gap: SPACING.xs,
     maxHeight: "280px",
     overflowY: "auto" as const,
+  } as React.CSSProperties,
+
+  processLogList: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    maxHeight: "220px",
+    overflowY: "auto" as const,
+  } as React.CSSProperties,
+
+  processLogRow: {
+    border: `1px solid ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.xs,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "3px",
   } as React.CSSProperties,
 
   liveRow: {
@@ -1918,6 +2759,139 @@ const styles = {
     color: COLORS.textSecondary,
   } as React.CSSProperties,
 
+  editorWorkspace: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.5fr) minmax(320px, 1fr)",
+    gap: SPACING.md,
+    alignItems: "start",
+  } as React.CSSProperties,
+
+  editorWorkspaceNarrow: {
+    gridTemplateColumns: "1fr",
+  } as React.CSSProperties,
+
+  promptPane: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  chatPane: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.sm,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    minHeight: "340px",
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  chatOnlyShell: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.md,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.sm,
+    minHeight: "560px",
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  chatMessageList: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    maxHeight: "360px",
+    overflowY: "auto" as const,
+    paddingRight: "2px",
+  } as React.CSSProperties,
+
+  chatMessage: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.xs,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "3px",
+  } as React.CSSProperties,
+
+  chatMessageUser: {
+    backgroundColor: COLORS.bgSidebar,
+  } as React.CSSProperties,
+
+  chatMessageAssistant: {
+    backgroundColor: COLORS.bgSurface,
+  } as React.CSSProperties,
+
+  chatMessageSystem: {
+    backgroundColor: COLORS.statusError,
+  } as React.CSSProperties,
+
+  chatMessageRole: {
+    margin: 0,
+    fontSize: "9px",
+    color: COLORS.textSecondary,
+  } as React.CSSProperties,
+
+  chatMessageText: {
+    margin: 0,
+    whiteSpace: "pre-wrap" as const,
+    wordBreak: "break-word" as const,
+    fontFamily: TYPOGRAPHY.fontMono,
+    fontSize: TYPOGRAPHY.textXs,
+    lineHeight: 1.5,
+    color: COLORS.textPrimary,
+  } as React.CSSProperties,
+
+  chatMessageTime: {
+    margin: 0,
+    fontSize: "9px",
+    color: COLORS.textTertiary,
+  } as React.CSSProperties,
+
+  chatInput: {
+    width: "100%",
+    minHeight: "92px",
+    resize: "vertical" as const,
+    border: `2px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
+    backgroundColor: COLORS.bgSurface,
+    color: COLORS.textPrimary,
+    fontFamily: TYPOGRAPHY.fontMono,
+    fontSize: TYPOGRAPHY.textXs,
+    lineHeight: 1.5,
+    padding: SPACING.sm,
+  } as React.CSSProperties,
+
+  agentJobStrip: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: SPACING.xs,
+  } as React.CSSProperties,
+
+  agentJobButton: {
+    border: `2px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.sm,
+    textAlign: "left" as const,
+    cursor: "pointer",
+    minWidth: "220px",
+    maxWidth: "100%",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "2px",
+  } as React.CSSProperties,
+
+  agentJobButtonSelected: {
+    backgroundColor: COLORS.bgSidebar,
+    boxShadow: SHADOWS.hover,
+  } as React.CSSProperties,
+
   promptEditor: {
     width: "100%",
     minHeight: "340px",
@@ -1954,6 +2928,24 @@ const styles = {
     fontSize: TYPOGRAPHY.textXs,
     lineHeight: 1.6,
     color: COLORS.textPrimary,
+  } as React.CSSProperties,
+
+  historyList: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: SPACING.xs,
+    maxHeight: "320px",
+    overflowY: "auto" as const,
+  } as React.CSSProperties,
+
+  historyRow: {
+    border: `1px solid ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.xs,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "3px",
   } as React.CSSProperties,
 
   runExpandedCard: {

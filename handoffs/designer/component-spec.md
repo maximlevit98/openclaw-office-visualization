@@ -9,6 +9,16 @@
 
 ---
 
+## 🎨 **DES-302 Continuation — Last Run Metadata Header Polish**
+
+**Direct Code Impact (Feb 21, 16:05 Moscow)**
+
+- ✅ **Micro-step:** DES-302 follow-up — Polish Last Run header metadata (status/duration/timestamp row)
+- ✅ **Change:** Added `fontWeight: 500` + `color: textPrimary` to metadata header for stronger visual hierarchy
+- ✅ **File:** `app/control/page.tsx` (line 1435, collapsed paragraph style)
+- ✅ **Build:** ✅ Pass (0 errors, `/control` 13.1kB)
+- ✅ **Next:** Monitor live feed usability for FE-301 alignment
+
 ## 🎨 **DES-302 — Expanded Last Run Readability**
 
 **Direct Code Impact (Feb 21, 14:44 Moscow)**
@@ -17,7 +27,6 @@
 - ✅ **Changes:** (1) `summaryExpanded` padding `md` → `lg` (12px → 16px); (2) line-height 1.65 → 1.8; (3) added `word-break: break-word`
 - ✅ **File:** `app/control/page.tsx` (lines 1967–1977)
 - ✅ **Build:** ✅ Pass (0 errors, `/control` 11.3kB)
-- ✅ **Next:** Polish header metadata formatting (status/duration row)
 
 ## 🎨 **DES-301 — Control Panel: Tighten Visual Rhythm & Spacing**
 

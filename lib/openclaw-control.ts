@@ -92,6 +92,32 @@ export interface OpenClawAgent {
   routes?: string[];
 }
 
+export interface AgentChatTurnInput {
+  agentId: string;
+  message: string;
+  sessionId?: string;
+  timeoutSeconds?: number;
+}
+
+export interface AgentChatTurnResult {
+  agentId: string;
+  sessionId?: string;
+  status?: string;
+  summary?: string;
+  reply: string;
+  runId?: string;
+  model?: string;
+  provider?: string;
+  durationMs?: number;
+  usage?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+    total?: number;
+  };
+}
+
 export interface ControlProject {
   id: string;
   name: string;
@@ -278,6 +304,83 @@ export async function runCronNow(id: string): Promise<unknown> {
   } catch {
     return { ok: true, raw };
   }
+}
+
+export async function runAgentChatTurn(input: AgentChatTurnInput): Promise<AgentChatTurnResult> {
+  const agentId = input.agentId.trim();
+  const message = input.message.trim();
+  if (!agentId) {
+    throw new Error("agentId is required");
+  }
+  if (!message) {
+    throw new Error("message is required");
+  }
+
+  const timeoutSeconds = Math.max(15, Math.min(input.timeoutSeconds ?? 180, 1800));
+  const args = [
+    "agent",
+    "--agent",
+    agentId,
+    "--message",
+    message,
+    "--channel",
+    "last",
+    "--json",
+    "--timeout",
+    String(timeoutSeconds),
+    "--verbose",
+    "off",
+  ];
+
+  if (input.sessionId?.trim()) {
+    args.push("--session-id", input.sessionId.trim());
+  }
+
+  const raw = await runOpenClaw(args, (timeoutSeconds + 20) * 1000);
+  const parsed = parseJsonLoose<Record<string, unknown>>(raw);
+
+  const result = (parsed.result || {}) as Record<string, unknown>;
+  const payloads = Array.isArray(result.payloads)
+    ? result.payloads.filter((entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object"))
+    : [];
+  const reply = payloads
+    .map((entry) => (typeof entry.text === "string" ? entry.text.trim() : ""))
+    .filter(Boolean)
+    .join("\n\n");
+
+  const meta =
+    result.meta && typeof result.meta === "object"
+      ? (result.meta as Record<string, unknown>)
+      : {};
+  const agentMeta =
+    meta.agentMeta && typeof meta.agentMeta === "object"
+      ? (meta.agentMeta as Record<string, unknown>)
+      : {};
+  const usage =
+    agentMeta.usage && typeof agentMeta.usage === "object"
+      ? (agentMeta.usage as Record<string, unknown>)
+      : {};
+
+  return {
+    agentId,
+    sessionId:
+      (typeof agentMeta.sessionId === "string" && agentMeta.sessionId) ||
+      input.sessionId,
+    status: typeof parsed.status === "string" ? parsed.status : undefined,
+    summary: typeof parsed.summary === "string" ? parsed.summary : undefined,
+    reply: reply || (typeof parsed.summary === "string" ? parsed.summary : ""),
+    runId: typeof parsed.runId === "string" ? parsed.runId : undefined,
+    model: typeof agentMeta.model === "string" ? agentMeta.model : undefined,
+    provider: typeof agentMeta.provider === "string" ? agentMeta.provider : undefined,
+    durationMs: typeof meta.durationMs === "number" ? meta.durationMs : undefined,
+    usage: {
+      input: typeof usage.input === "number" ? usage.input : undefined,
+      output: typeof usage.output === "number" ? usage.output : undefined,
+      cacheRead: typeof usage.cacheRead === "number" ? usage.cacheRead : undefined,
+      cacheWrite: typeof usage.cacheWrite === "number" ? usage.cacheWrite : undefined,
+      total: typeof usage.total === "number" ? usage.total : undefined,
+    },
+  };
 }
 
 export function scheduleLabel(schedule?: CronJobSchedule): string {

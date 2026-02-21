@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       void sendSnapshot();
       const snapshotTimer = setInterval(() => {
         void sendSnapshot();
-      }, 8000);
+      }, 5000);
 
       const heartbeatTimer = setInterval(() => {
         send({
