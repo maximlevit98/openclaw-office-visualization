@@ -16,6 +16,7 @@ export interface Session {
   activeMinutes?: number;
   messages?: Message[];
   status?: "active" | "idle" | "offline";
+  unreadCount?: number;
 }
 
 export interface Agent {

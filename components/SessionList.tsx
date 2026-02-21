@@ -43,6 +43,9 @@ export function SessionList({
                 : {}),
             }}
           >
+            {session.unreadCount && session.unreadCount > 0 && (
+              <div style={styles.unreadDot} title={`${session.unreadCount} unread`} />
+            )}
             <span style={styles.name}>{session.label || session.key}</span>
             <span style={styles.meta}>
               {session.activeMinutes ? `${session.activeMinutes}m` : ""}
@@ -68,6 +71,7 @@ const styles = {
     width: "100%",
     padding: SPACING.md,
     marginBottom: SPACING.sm,
+    gap: SPACING.sm,
     backgroundColor: "transparent",
     border: `1px solid transparent`,
     borderLeft: `3px solid transparent`,
@@ -96,6 +100,9 @@ const styles = {
   name: {
     fontWeight: 500,
     flex: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   } as React.CSSProperties,
 
   meta: {
@@ -117,5 +124,14 @@ const styles = {
     color: COLORS.textTertiary,
     margin: 0,
     padding: `${SPACING.md} ${SPACING.lg}`,
+  } as React.CSSProperties,
+
+  unreadDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.unreadDot,
+    flexShrink: 0,
+    animation: "pulse 2s infinite",
   } as React.CSSProperties,
 };
