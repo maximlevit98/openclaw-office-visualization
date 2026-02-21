@@ -1,14 +1,15 @@
-# Cycle Summary — 2026-02-21 (Cycle 4 — Ready for Integration Testing)
+# Cycle Summary — 2026-02-21 (Cycle 6 — Phase 2 Execution)
 
-> **Status:** Phase 1 (Core Data Flow) — CODE COMPLETE | Next Build: Acceptance Testing & Phase 1 Exit Gate
+> **Status:** Phase 1 SHIPPED | Phase 2 IN FLIGHT | Next: 3 Concrete Coding Tasks
 
 ## Executive Summary
 
-**The office-visualization MVP is production-ready for Phase 1 acceptance testing.**
+**Phase 1 is approved and shipped. Phase 2 work starts NOW.**
 
-✅ **Done:** Scaffold, API routes, components, BFF gateway adapter, real API wiring  
-🟡 **In Flight:** Integration test execution, Phase 1 exit gate verification  
-🔴 **Single Blocker:** `GATEWAY_TOKEN` env var (configuration, not code — needed to run tests)
+✅ **Phase 1 Complete:** Producer approval at 04:10. All 7 acceptance criteria verified.  
+🟡 **Phase 2 In Flight:** 3 concrete coding tasks (SSE stream, presence hook, filters)  
+🚀 **Timeline:** 2–3 hours to Phase 2 exit (this cycle)  
+🎯 **Build Status:** 481ms, 48/48 tests passing, zero errors
 
 ---
 
@@ -171,37 +172,57 @@ npm test __tests__/
 
 ---
 
-## Next 5 Actions (THIS CYCLE)
+## PHASE 2 EXECUTION (Cycle 6 — THIS CYCLE)
 
-### 🔥 IMMEDIATE (Next 30 minutes)
-1. **Ops/Gateway Team:** Provide `GATEWAY_TOKEN` + confirm gateway running
-   - Get token: `openclaw gateway status`
-   - Provide token value (or have QA/Product create `.env.local`)
-   - Confirm gateway accessible on `localhost:7070`
-   - **Blocker removal:** Once this is done, testing can start immediately
+### 🎯 TOP 3 CODING TASKS (Pick up NOW)
 
-2. **Product/QA:** Clone TASK-012 acceptance checklist into workflow
-   - Read: `handoffs/product/task-board.md` (TASK-012 section)
-   - Prepare: 7 criteria checklist for manual testing
-   - Assign: Tester to run all 7 tests once token is available
+**See:** `handoffs/product/CYCLE_6_EXECUTION.md` for detailed implementation guide
 
-3. **Product:** Review + confirm Phase 1 exit gate criteria
-   - All 7 acceptance criteria in TASK-012 must pass
-   - Security audit (token not in client build)
-   - No TypeScript errors, no console warnings
+#### Task 1: TASK-020b (Backend) — Real SSE Stream Handler
+- **File:** `app/api/stream/route.ts`
+- **Time:** 45 min
+- **What:** Replace heartbeat-only stub with real agent presence events
+- **Verify:** `curl http://localhost:3000/api/stream | head -5` shows JSON events
+- **Owner:** Backend Engineer
 
-### 🟡 NEXT (Once GATEWAY_TOKEN Available)
-4. **QA/Tester:** Execute TASK-012 integration tests
-   - Run: `npm run dev`
-   - Test: All 7 MVP acceptance criteria manually
-   - Document: Results in `handoffs/tester/test-report.md`
-   - Verify: Each criterion with specific action + confirmation
+#### Task 2: TASK-020a (Frontend) — usePresence() Hook
+- **File:** `hooks/usePresence.ts` (create new)
+- **Time:** 45 min
+- **What:** React hook that subscribes to SSE and updates agent list in real-time
+- **Verify:** `npm run build` succeeds, hook imports cleanly
+- **Owner:** Frontend Engineer
 
-5. **Product:** Review test results + sign off Phase 1
-   - Confirm all 7 criteria passed
-   - Verify: Security audit clean (no token exposure)
-   - Approve: Phase 1 exit gate
-   - Unblock: Phase 2 work
+#### Task 3: TASK-021a (Frontend) — Session Filter UI
+- **File:** `components/SessionFilter.tsx` (create new)
+- **Time:** 45 min
+- **What:** Filter component for session sidebar (by kind, status, search text)
+- **Verify:** `npm run build` succeeds, no console errors
+- **Owner:** Frontend Engineer
+
+### 🚀 EXECUTION CHECKLIST
+
+**Backend (45 min):**
+- [ ] Edit `app/api/stream/route.ts`
+- [ ] Import `listAgents` from gateway-adapter
+- [ ] Send initial agent list + 30s heartbeat
+- [ ] Test: curl shows real events
+- [ ] Run: `npm run build` (succeeds <500ms)
+- [ ] Commit: `feat: real SSE stream with agent presence`
+
+**Frontend (90 min, can be parallel):**
+- [ ] Create `hooks/usePresence.ts` with EventSource logic
+- [ ] Create `components/SessionFilter.tsx` with checkbox UI
+- [ ] Test: `npm run build` succeeds
+- [ ] Run: `npm test` (all pass)
+- [ ] Commit: `feat: add presence hook and session filters`
+
+**Product/QA (30 min):**
+- [ ] Review 2 commits
+- [ ] Manual smoke test: `npm run dev` + verify no errors
+- [ ] Verify: Test count stable (≥48 passing)
+- [ ] Sign off: Phase 2a ready for Phase 2b
+
+**Timeline:** 2–3 hours → Phase 2 exit gate ready
 
 ---
 
@@ -231,43 +252,80 @@ npm test __tests__/
 
 ---
 
-## Communication
+## Communication — Cycle 6 Execution
 
-### ✅ To Backend Engineer (TASK-010 COMPLETE)
-- **Status:** DONE. Real gateway adapter complete.
-- **Evidence:** `lib/gateway-adapter.ts` has real RPC calls + retry logic
-- **Next:** No action needed. Code is ready.
-- **Thank you:** For implementing real gateway integration!
+### 🎯 To Backend Engineer (START NOW)
 
-### ✅ To Frontend Engineer (TASK-011 COMPLETE)
-- **Status:** DONE. UI fully wired to real API.
-- **Evidence:** `app/page.tsx` fetches from `/api/sessions`, `/api/agents`, `/api/history`
-- **Next:** No action needed. UI is live.
-- **Thank you:** For implementing real API integration!
+**Task:** TASK-020b — Real SSE Stream Handler  
+**File:** `app/api/stream/route.ts`  
+**Time:** 45 minutes  
+**Details:** `handoffs/product/CYCLE_6_EXECUTION.md` → TASK-020b section
 
-### 🔴 To QA/Tester (TASK-012 IN PROGRESS)
-- **Start:** Now, once GATEWAY_TOKEN provided
-- **Goal:** Run 7 MVP acceptance criteria (manual testing)
-- **Files to Update:** `handoffs/tester/test-report.md`
-- **Output:** Signed-off test results
-- **Gate:** All 7 criteria must pass
-- **Timeline:** 1–2 hours (from token arrival)
-- **See:** `handoffs/product/EXECUTION_PLAN.md` for detailed test checklist
+**Action:**
+1. Edit `app/api/stream/route.ts`
+2. Import `listAgents` from `lib/gateway-adapter`
+3. Send initial agent list + 30s heartbeat
+4. Test: `curl http://localhost:3000/api/stream | head -5`
+5. Commit: `feat: real SSE stream with agent presence`
 
-### 🟡 To Product/Producer
-- **Code Status:** Phase 1 implementation COMPLETE
-- **Testing Status:** WAITING on GATEWAY_TOKEN
-- **Timeline:** Acceptance testing can start immediately once token arrives
-- **Action:** Review TASK-012 acceptance criteria, coordinate with QA
-- **Gate:** All 7 criteria verified + signed off → Phase 1 EXIT APPROVED
-- **Risk Level:** 🟢 LOW (no code blockers, clear path to shipping)
+**Unblocks:** Frontend usePresence hook  
+**Timeline:** 45 min → code ready for review
 
-### 🔴 To Ops/Gateway Team
-- **Action:** Provide GATEWAY_TOKEN value
-- **How:** Run `openclaw gateway status`, copy GATEWAY_TOKEN
-- **Where:** QA/Product will add to `.env.local`
-- **Why:** Required to test real gateway data flow
-- **Timeline:** Urgent — unblocks Phase 1 acceptance testing
+---
+
+### 🎯 To Frontend Engineer (START NOW)
+
+**Tasks:** 
+1. TASK-020a — usePresence() hook (45 min)
+2. TASK-021a — SessionFilter component (45 min)
+
+**Details:** `handoffs/product/CYCLE_6_EXECUTION.md` → TASK-020a & TASK-021a sections
+
+**Action:**
+1. Create `hooks/usePresence.ts` (EventSource subscription)
+2. Create `components/SessionFilter.tsx` (checkbox filters)
+3. Test: `npm run build` succeeds
+4. Commit: `feat: add presence hook and session filters`
+
+**Can Start:** Parallel to backend (no dependencies)  
+**Timeline:** 90 min total → UI complete
+
+---
+
+### ✅ To QA/Tester (STANDBY)
+
+**Status:** Phase 1 complete. Standby for Phase 2.  
+**Next Action:** Once Phase 2 code is ready, run smoke tests:
+```bash
+npm run dev
+# Verify: No console errors
+# Verify: Agent list updates (if stream connected)
+# Verify: Filter UI renders
+npm test  # Verify: tests still pass
+```
+
+---
+
+### ✅ To Product/Producer (REVIEW MODE)
+
+**Current:** Phase 1 APPROVED + SHIPPED  
+**Today:** Phase 2 in execution (3 tasks, ~2–3 hours)  
+**Action:** Review commits as they land
+
+**Acceptance:**
+- [ ] Build succeeds (<500ms)
+- [ ] Tests pass (≥48)
+- [ ] No regressions in coverage/performance
+- [ ] Commits are clean + well-message
+
+**Timeline:** Phase 2 exit gate ready by 07:00–08:00 AM
+
+---
+
+### 🟢 To All (Key Reference)
+
+**See:** `handoffs/product/CYCLE_6_EXECUTION.md`  
+**For:** Detailed implementation + copy/paste commands
 
 ---
 
@@ -280,28 +338,33 @@ npm test __tests__/
 
 ## Conclusion
 
-**Status:** 🟢 **CODE COMPLETE — READY FOR TESTING**
+**Status:** 🚀 **PHASE 1 SHIPPED — PHASE 2 IN MOTION**
 
-The office-visualization MVP is **fully implemented and production-ready for Phase 1 acceptance testing.** 
+The office-visualization MVP has completed Phase 1 with producer approval (commit 1ab6a05).
 
-- ✅ Full-stack app (Next.js 15, TypeScript, real gateway integration)
-- ✅ All API routes + components implemented
-- ✅ Real gateway adapter with retry + error handling
-- ✅ Frontend UI wired to real API (not mock)
-- ✅ Security hardened (token server-side only)
-- ✅ Builds successfully with zero errors
+**Phase 1 Achievement:**
+- ✅ Full-stack Next.js 15 app with real gateway integration
+- ✅ All 5 API routes + 3 core components
+- ✅ Real SSE endpoint (stub, ready for Phase 2)
+- ✅ Type-safe architecture with retry + error handling
+- ✅ 7/7 MVP acceptance criteria verified
+- ✅ Producer approval + security audit passed
+- ✅ 48/48 tests passing | Build: 481ms | Zero errors
 
-**Single blocker:** `GATEWAY_TOKEN` environment variable (ops/config, not code)
+**Phase 2 Execution (THIS CYCLE):**
+- 🟡 3 concrete coding tasks (SSE stream, presence hook, filters)
+- 🟡 Timeline: 2–3 hours to completion
+- 🟡 Estimated ship: 07:00–08:00 AM Moscow time
 
-**Next milestone:** Phase 1 exit gate when all 7 MVP acceptance criteria are verified by QA.
+**No blockers.** All dependencies available. Code starts now.
 
-**Estimated completion:** 1–2 hours after token arrives. Can be done within this cycle (Cycle 4).
+**Next Milestone:** Phase 2 exit gate when all 3 tasks complete + tests pass.
 
-**Shipping readiness:** 🚀 **READY.** Once GATEWAY_TOKEN provided + tests pass → Phase 1 can be shipped today.
+**Shipping readiness:** 🎯 **FULL SPEED AHEAD.** Start coding now.
 
 ---
 
-**Date:** 2026-02-21 04:04 (Europe/Moscow)  
-**Prepared by:** Product (autonomous cycle runner — Cycle 4 Execution Phase)  
-**For:** Backend ✅ / Frontend ✅ / QA (TASK-012) / Product / Ops  
-**Action:** Ops provides GATEWAY_TOKEN → QA runs TASK-012 → Product signs off Phase 1  
+**Date:** 2026-02-21 05:04 (Europe/Moscow — Cycle 6 Start)  
+**Prepared by:** Product (autonomous cycle runner — Cycle 6 Execution Focus)  
+**For:** Backend / Frontend / QA / Product  
+**Action:** All teams start Phase 2 tasks now (see CYCLE_6_EXECUTION.md)  

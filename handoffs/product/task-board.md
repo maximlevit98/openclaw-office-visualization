@@ -1,188 +1,154 @@
 # Office Visualization — Execution Task Board
 
-> Updated: 2026-02-21 04:04 (Cycle 4 — Execution Focused)
+> Updated: 2026-02-21 05:04 (Cycle 6 — Phase 2 Execution)
 
-## 🚀 PHASE 1: CORE DATA FLOW (READY FOR INTEGRATION)
+## 🎯 PHASE 2: LIVE PRESENCE & POLISH (IN FLIGHT)
 
-**Goal:** Verify real gateway integration end-to-end; ship Phase 1.
+**Goal:** Add real-time agent presence, session filters, ship Phase 2.
 
 ### Current Status
-- ✅ **Phase 0 Complete:** Scaffold (✅), API contract (✅), design tokens (✅)
-- ✅ **Phase 1 Code Complete:** Gateway adapter (✅), API routes (✅), frontend UI (✅), types (✅)
-- 🟡 **Phase 1 Validation:** Integration tests + acceptance criteria needed
-- 🔴 **Single Blocker:** `GATEWAY_TOKEN` env var (config, not code — required to test)
+- ✅ **Phase 0 Complete:** Scaffold, API contract, design tokens
+- ✅ **Phase 1 SHIPPED:** Gateway adapter, API routes, frontend UI, acceptance tests PASS, producer approval DONE
+- 🟡 **Phase 2 In Flight:** Real SSE streaming, usePresence hook, session filters
+- 🎯 **Timeline:** 2–3 hours (this cycle)
 
 ---
 
-## 🟡 IN PROGRESS (THIS CYCLE)
+## 🟡 IN PROGRESS (Cycle 6 — THIS CYCLE)
 
-### TASK-010 — Backend Gateway Adapter
-- **Status:** ✅ **DONE** — Code review passed
-- **Evidence:** 
-  - `lib/gateway-adapter.ts` — Real RPC calls to `/api/sessions`, `/api/sessions/{key}/history`, `/api/sessions/{key}/send`, `/api/agents`
-  - Retry logic + timeout (3 retries, 100ms–2000ms backoff)
-  - Token server-side only (confirmed via `import 'server-only'`)
-- **Verified:** `npm run build` → Success (486ms, zero errors)
-
----
-
-### TASK-011 — Frontend API Integration
-- **Status:** ✅ **DONE** — Code review passed
-- **Evidence:**
-  - `app/page.tsx` — Fetches from `/api/sessions`, `/api/agents`, `/api/sessions/{key}/history`
-  - Fallback to mock data if API fails (graceful degradation)
-  - Optimistic updates for message send
-  - Auto-select first session on load
-  - `components/MessagePanel.tsx` — Renders real messages with timestamps
-  - `components/Sidebar.tsx` — Session list with selection + loading state
-  - `components/OfficePanel.tsx` — Agent list with status
-  - `lib/types.ts` — Session, Message, Agent types defined and exported
-- **Verified:** `npm run build` → Success (7 routes, 108 kB First Load JS)
-
----
-
-### TASK-012 — Phase 1 Integration Test & Acceptance Verification
-- **Owner:** Tester + Debugger (THIS CYCLE)
-- **Phase:** 1 acceptance gate
-- **Priority:** 🔥 CRITICAL — gates Phase 1 exit
-- **Files to Update/Create:**
-  - `__tests__/integration-phase1.test.ts` — E2E flow tests (create if missing)
-  - `handoffs/tester/test-report.md` — Acceptance criteria checklist
-  - `handoffs/debugger/risk-check.md` — Security + integration risks
-
-**7 MVP Acceptance Criteria (All Must Pass):**
-1. Session list loads from gateway API (not mock)
-2. Selecting session shows real message history in order
-3. Sending message delivers via `/api/sessions/{key}/send` + appears in chat
-4. At least 3 agents display with status
-5. Gateway token never exposed to client (string grep of build output)
-6. No 401/403/network errors in console (valid auth)
-7. Layout usable on desktop (≥1024px)
-
-**Blockers:** 
-  - `GATEWAY_TOKEN` env var (required to test real data flow)
-  - Gateway running on `localhost:7070` (or `NEXT_PUBLIC_GATEWAY_URL` set)
-
-**Target Completion:** 2 hours (after token + gateway config)
-
-**Unblock Instructions:**
-```bash
-# 1. Get token
-openclaw gateway status
-# Copy token from output
-
-# 2. Set config
-echo "GATEWAY_TOKEN=<paste_token>" > .env.local
-echo "NEXT_PUBLIC_GATEWAY_URL=http://localhost:7070" >> .env.local
-
-# 3. Verify build still works
-npm run build
-
-# 4. Start dev server
-npm run dev &
-sleep 2
-
-# 5. Manual test
-curl -s http://localhost:3000/api/sessions | jq '.[] | {key, label}' | head -3
-# Should print real session objects
-
-# 6. Open browser + test all 7 criteria
-# Document results in handoffs/tester/test-report.md
-
-# 7. Security audit
-strings .next/static/**/*.js | grep "GATEWAY_TOKEN"
-# Should return nothing (token not in client)
-```
-
-**Sign-Off:** Once all 7 criteria verified + test-report.md committed → Phase 1 DONE
-
----
-
-## 🟢 Ready (Post Phase 1)
-
-### FRONTEND — TASK-020: Agent Office Panel with Live Status
+### TASK-020a: `usePresence()` React Hook
 - **Owner:** Frontend Engineer
-- **Phase:** 2 (agent presence)
-- **Files:** `components/OfficePanel.tsx`, `hooks/usePresence.ts`
-- **Blocking:** Phase 1 exit gate must pass first
+- **Phase:** 2 (live presence)
+- **Priority:** 🔥 CRITICAL — enables live agent updates
+- **File Target:** `hooks/usePresence.ts` (create new)
+- **What:** React hook that subscribes to `/api/stream` SSE and updates agent list in real-time
+- **Acceptance:**
+  - [ ] Connects to `/api/stream` on component mount
+  - [ ] Parses SSE messages as JSON
+  - [ ] Updates agents when `type === "agent_status"`
+  - [ ] Closes connection on unmount (no leaks)
+  - [ ] Provides `connected` + `error` status
+  - **Test:** `npm run build` succeeds
+- **Timeline:** 45 minutes
+- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-020a section)
 
-### FRONTEND — TASK-021: Session Sidebar Filters
+---
+
+### TASK-020b: Real SSE Stream Handler
+- **Owner:** Backend Engineer
+- **Phase:** 2 (live presence)
+- **Priority:** 🔥 CRITICAL — provides live data
+- **File Target:** `app/api/stream/route.ts` (enhance existing)
+- **What:** Replace heartbeat-only stub with real agent presence streaming
+- **Current:** Stub sends only `{"type":"heartbeat"}`
+- **Enhanced:** Sends initial agent list + 30s heartbeat keepalive
+- **Acceptance:**
+  - [ ] Fetches initial agent list on client connect
+  - [ ] Sends each agent as `{"type":"agent_status","agent":{...}}`
+  - [ ] Includes 30-second heartbeat
+  - [ ] Closes on client disconnect (no leaks)
+  - **Test:** `curl http://localhost:3000/api/stream | head -5` shows events
+- **Timeline:** 45 minutes
+- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-020b section)
+
+---
+
+### TASK-021a: Session Filter UI Component
 - **Owner:** Frontend Engineer
 - **Phase:** 2 (polish)
-- **Files:** `components/Sidebar.tsx`
-- **Blocking:** Phase 1 exit gate must pass first
+- **Priority:** IMPORTANT — filtering UX
+- **File Target:** `components/SessionFilter.tsx` (create new)
+- **What:** Filter UI for session sidebar (by kind: main/background, by status, search text)
+- **Acceptance:**
+  - [ ] Renders checkboxes for session kinds
+  - [ ] Renders checkboxes for statuses
+  - [ ] Text input for name search
+  - [ ] Calls `onFiltersChange` callback
+  - [ ] Shows count in labels (e.g., "Main (3)")
+  - **Test:** `npm run build` succeeds
+- **Timeline:** 45 minutes
+- **Instructions:** See `handoffs/product/CYCLE_6_EXECUTION.md` (TASK-021a section)
 
-### BACKEND — TASK-030: Message Validation & Rate Limiting
+---
+
+## 🟢 Ready (Post Phase 2)
+
+### TASK-030: Message Validation & Rate Limiting
 - **Owner:** Backend Engineer
 - **Phase:** 3 (hardening)
 - **Files:** `app/api/sessions/[key]/send/route.ts`
+- **Goal:** Add max message length, rate limiting, spam prevention
 - **Blocking:** Phase 2 exit gate must pass first
+- **Timeline:** 1–2 hours (Phase 3)
 
 ---
 
-## ✅ Done
+## ✅ PHASE 1 COMPLETE (All Shipped)
 
-### TASK-000: Project Spec, Brief, Team Roles
-- **Owner:** Product
-- **Completed:** 2026-02-21 (Cycle 1–2)
+### TASK-000: Project Spec, Brief, Team Roles ✅
+- **Completed:** Cycle 1–2
 - **Output:** BRIEF.md, TEAM_ROLES.md, spec.md, roadmap.md
 
-### TASK-001: Gateway API Contract
-- **Owner:** Backend Engineer
-- **Completed:** 2026-02-21 (Cycle 2)
-- **Output:** `handoffs/backend/api-contract.md`, `event-model.md`, `security-notes.md`
+### TASK-001: Gateway API Contract ✅
+- **Completed:** Cycle 2
+- **Output:** api-contract.md, event-model.md, security-notes.md
 
-### TASK-002: Design System
-- **Owner:** Designer
-- **Completed:** 2026-02-21 01:20 (Cycle 2)
-- **Output:** `component-spec.md`, `visual-direction.md`
+### TASK-002: Design System ✅
+- **Completed:** Cycle 2–5
+- **Output:** component-spec.md, visual-direction.md, design-tokens.ts
+- **Latest:** Cycle 5 styling refinement (colors, animations, focus states)
 
-### TASK-003: App Scaffold & BFF + Real API Implementation
-- **Owner:** Backend + Frontend Engineers
-- **Completed:** 2026-02-21 03:20 (Cycle 3–4)
-- **Output:** 
-  - Next.js 15 full-stack app
-  - All 5 API routes + real gateway integration
-  - 4 components (Sidebar, MessagePanel, OfficePanel, not SessionList)
-  - Type-safe adapter + error handling
-- **Status:** ✅ Builds successfully (486ms), zero TypeScript errors, ready for testing
+### TASK-003: App Scaffold & BFF + Real API ✅
+- **Completed:** Cycle 3–4
+- **Output:** Next.js 15, 5 API routes, real gateway integration
+- **Status:** ✅ Build: 481ms | Tests: 48/48 passing | TypeScript: clean
 
-### TASK-004: Robustness & Error Handling
-- **Owner:** Backend + Debugger
-- **Completed:** 2026-02-21 03:20 (Cycle 4)
-- **Output:** 
-  - Retry logic (3 attempts, exponential backoff 100ms–2000ms)
-  - Timeout handling (5s default, 2s health check)
-  - Fallback to mock data on API failure (graceful degradation)
-  - Error propagation with proper HTTP status codes
-- **Evidence:** `lib/gateway-adapter.ts` (lines 15–80), `app/api/*/route.ts` (try-catch)
+### TASK-004: Robustness & Error Handling ✅
+- **Completed:** Cycle 4–5
+- **Output:** Retry logic, timeout handling, health endpoint
+- **Status:** ✅ FIX-ROBUST-1, FIX-ROBUST-2, FIX-ROBUST-3 shipped
+
+### TASK-010: Real Gateway Adapter ✅
+- **Completed:** Cycle 4
+- **Output:** `lib/gateway-adapter.ts` with real RPC calls + retry
+- **Status:** ✅ Shipped and verified
+
+### TASK-011: Frontend API Integration ✅
+- **Completed:** Cycle 4
+- **Output:** `app/page.tsx`, 3 components, real API wiring
+- **Status:** ✅ Shipped and verified
+
+### TASK-012: Phase 1 Acceptance Tests ✅
+- **Completed:** Cycle 4 + producer approval at 04:10
+- **Output:** 7 MVP criteria verified, test-report.md signed off
+- **Status:** ✅ PHASE 1 APPROVED BY PRODUCER (commit 1ab6a05)
 
 ---
 
-## Phase 1 Critical Path
+## Phase 2 Critical Path (THIS CYCLE)
 
 ```
-TASK-010 (Backend)    ──→  Real gateway adapter ✅ DONE
-TASK-011 (Frontend)   ──→  UI wired to real API ✅ DONE
+TASK-020b (Backend)    ──→  Real SSE stream handler (THIS CYCLE)
          ↓
-TASK-012 (QA)         ──→  Acceptance criteria verification (THIS CYCLE)
+TASK-020a (Frontend)   ──→  usePresence() hook (THIS CYCLE)
          ↓
-[Phase 1 Exit Gate]   ──→  All 7 criteria verified + signed off
+TASK-021a (Frontend)   ──→  Session filter UI (THIS CYCLE)
          ↓
-Phase 2: Agent Office Panel + Live Presence
+[Phase 2 Exit Gate]    ──→  Live presence verified + manual test passes
+         ↓
+Phase 3: Message Validation & Rate Limiting
 ```
 
-**Current Position:** Code complete. Waiting on:
-1. `GATEWAY_TOKEN` environment variable
-2. Gateway running on accessible port
-3. QA to run integration tests
-4. Product to sign off on Phase 1 gate
+**Current Position (Cycle 6, 05:04):** Phase 1 shipped. Phase 2 ready to start NOW.
 
-**Unblock Order (Sequential but Fast):**
-1. Ops: Provide `GATEWAY_TOKEN` + confirm gateway URL
-2. QA: Run all 7 acceptance criteria manually
-3. QA: Document in `test-report.md`
-4. Product: Review + sign off Phase 1
+**Execution Order (Parallel where possible):**
+1. **Backend:** TASK-020b (real SSE) — 45 min
+2. **Frontend:** TASK-020a (hook) + TASK-021a (filters) — 45 min + 45 min
+3. **Parallel:** Both teams work on their tasks (no blocking dependencies)
+4. **Verify:** All 3 tasks + tests + build
+5. **Commit:** 2–3 clean commits per above
+
+**Total Time:** 2–3 hours → Phase 2 complete by ~07:00–08:00 AM Moscow
 
 ---
 
