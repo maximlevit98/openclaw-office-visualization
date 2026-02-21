@@ -1,11 +1,37 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 8 — Session Unread Indicators)  
-> **Implementation Status:** ✅ Cycle 8 Unread Indicators Complete
+> Last updated: 2026-02-21 (Cycle 9 — Message Preview & Timestamps)  
+> **Implementation Status:** ✅ Cycle 9 Message Preview & Timestamps Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+
+---
+
+## 🎨 **CYCLE 9 DELTA — Message Preview & Human-Readable Timestamps**
+
+**Direct Code Impact (Feb 21, 08:10 Moscow)**
+
+### Session Type Extension
+- ✅ **Extended fields:** Added `lastMessage?: string` and `lastMessageTime?: string` to Session interface
+- ✅ **Preview display:** Show last message snippet in session rows (truncated with ellipsis)
+- ✅ **Timestamp formatting:** Display relative time (e.g., "2m ago", "1h ago") using formatTimestamp utility
+- ✅ **Better discoverability:** Users can see message content without opening session
+
+### SessionList Component
+- ✅ **Layout redesign:** Changed from horizontal to vertical stacking (header + preview)
+- ✅ **Message preview:** 12px secondary text color, single line with ellipsis overflow
+- ✅ **Time display:** 11px tertiary color, right-aligned in preview row
+- ✅ **Spacing:** Added itemContent, itemHeader, itemMeta container styles with proper gaps
+- ✅ **Responsive:** All styles support truncation and overflow handling
+
+**Testing:**
+- ✅ Build succeeds (502ms, zero errors)
+- ✅ Message preview renders correctly
+- ✅ Timestamps use human-readable format
+- ✅ Text overflow handled with ellipsis
+- ✅ Desktop + tablet layouts verified
 
 ---
 
