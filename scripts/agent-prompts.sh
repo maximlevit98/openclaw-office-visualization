@@ -14,6 +14,7 @@ Usage:
   ./scripts/agent-prompts.sh set <role|job-id|job-name> <prompt-file>
   ./scripts/agent-prompts.sh run <role|job-id|job-name>
   ./scripts/agent-prompts.sh last <role|job-id|job-name>
+  ./scripts/agent-prompts.sh cycle
 
 Roles:
   designer backend frontend tester debugger product producer summary tg-morning tg-evening
@@ -25,6 +26,7 @@ Examples:
   ./scripts/agent-prompts.sh set tester /tmp/tester-prompt.txt
   ./scripts/agent-prompts.sh run producer
   ./scripts/agent-prompts.sh last summary
+  ./scripts/agent-prompts.sh cycle
 EOF
 }
 
@@ -120,6 +122,12 @@ show_prompt() {
   get_jobs_json | jq -r --arg id "${id}" '.jobs[] | select(.id == $id) | .payload.message // ""'
 }
 
+run_job_now() {
+  local id="$1"
+  local timeout_ms="${OPENCLAW_CRON_RUN_TIMEOUT_MS:-240000}"
+  openclaw cron run "${id}" --timeout "${timeout_ms}"
+}
+
 list_jobs() {
   get_jobs_json | jq -r '
     .jobs[]
@@ -184,7 +192,7 @@ case "${cmd}" in
     q="$1"
     id="$(resolve_query_to_id "${q}")"
     [[ -n "${id}" ]] || { echo "Job not found: ${q}"; exit 1; }
-    openclaw cron run "${id}"
+    run_job_now "${id}"
     ;;
   last)
     [[ $# -eq 1 ]] || { usage; exit 1; }
@@ -192,6 +200,17 @@ case "${cmd}" in
     id="$(resolve_query_to_id "${q}")"
     [[ -n "${id}" ]] || { echo "Job not found: ${q}"; exit 1; }
     openclaw cron runs --id "${id}" --limit 1
+    ;;
+  cycle)
+    [[ $# -eq 0 ]] || { usage; exit 1; }
+    roles=(designer backend frontend tester debugger product producer summary)
+    for role in "${roles[@]}"; do
+      id="$(resolve_query_to_id "${role}")"
+      [[ -n "${id}" ]] || { echo "Job not found for role: ${role}"; exit 1; }
+      echo ">> running ${role} (${id})"
+      run_job_now "${id}"
+    done
+    echo "Cycle complete."
     ;;
   *)
     usage
