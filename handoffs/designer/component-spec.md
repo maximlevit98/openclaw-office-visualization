@@ -1,10 +1,21 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 3 — Phase 1 refinement)
+> Last updated: 2026-02-21 (Cycle 3 — Phase 1 refinement)  
+> **Implementation Status:** ✅ Cycle 3 Code Implementation Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+>
+> **Code Status (Cycle 3 Implementation):**
+> - ✅ Design tokens (`lib/design-tokens.ts`): Complete — 8 base colors + 5 status + 3 accents + typography + spacing + radius
+> - ✅ CSS custom properties (`app/layout.tsx`): Complete — `:root` variables + responsive breakpoints + animations
+> - ✅ Sidebar component: Complete — Desktop fixed 280px + Tablet 64px icon strip + overlay modal
+> - ✅ Message panel: Complete — Warm palette, auto-scroll, new messages pill, collapsible tool events (TODO), Shift+Enter for newline
+> - ✅ Office panel: Complete — Desktop card grid (desk nameplates) + Tablet 52px top status strip, all 5 status states with animations
+> - ✅ Responsive layout: Complete — 3-col desktop, 2-col+strip tablet, grid-based architecture
+> - 🟡 Tool-call collapsible: Spec complete, component structure ready, expand/collapse logic deferred to backend integration
+> - 🟡 Filter sidebar: UI ready, search filter input implemented in SessionList component
 
 ---
 

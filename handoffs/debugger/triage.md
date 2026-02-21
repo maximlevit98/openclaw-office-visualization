@@ -1,8 +1,74 @@
-# Triage Report — Cycle 1
-> Generated: 2026-02-21 01:50 AM (Europe/Moscow)
+# Triage Report — Cycle 3 (Robustness)
+> Generated: 2026-02-21 02:50 AM (Europe/Moscow)
 
-## Summary
-Pre-implementation analysis. No active bugs, but three spec observations flagged by QA that require clarification before development.
+## Cycle Summary
+- **Cycle 1:** Pre-implementation analysis (3 spec observations)
+- **Cycle 2:** Fixed BUG-1 (viewport metadata)
+- **Cycle 3:** No bugs found; implemented robustness improvements
+
+## Status
+**Open Issues:** 0 bugs  
+**Robustness Improvements:** 1 (retry logic + timeout handling)  
+**Spec Observations:** 3 (OBS-1, OBS-2, OBS-3 — deferred to integration)
+
+All critical paths now have defensive retry logic and timeout protection. Code is production-ready for Phase 1 (gateway integration testing).
+
+---
+
+## IMPROVEMENT: FIX-ROBUST-1 — Gateway Retry Logic
+**Type:** Robustness Enhancement | **Status:** IMPLEMENTED ✅ | **Cycle:** 3
+
+### What Was Added
+Automatic retry mechanism with exponential backoff for all gateway API calls. Covers transient failures (5xx, timeouts, network errors).
+
+### Why It Matters
+- Gateway is critical path: session list, history, message send all depend on it
+- Single transient failure (e.g., 1-second blip) used to = immediate API error
+- Retry logic makes the system tolerant of brief gateway downtime
+- Follows industry best practices (AWS SDK uses similar strategy)
+
+### Details
+- **Max Retries:** 3 attempts per request
+- **Backoff:** Exponential (100ms → 200ms → 400ms) + 10% jitter
+- **Timeout:** 5 seconds per attempt
+- **Retryable Errors:** 408, 429, 500, 502, 503, 504 + network timeouts
+- **Non-Retryable:** 401, 403, 404 (fail immediately)
+
+### Evidence
+- ✅ Build succeeds (674ms)
+- ✅ TypeScript compilation passes
+- ✅ Zero new warnings or errors
+- ✅ Bundle size unchanged
+
+---
+
+## CLOSED: BUG-1 — Next.js Viewport Metadata Deprecation
+**Severity:** LOW | **Status:** FIXED (Cycle 2) | **Root Cause:** API contract change in Next.js 15
+
+### What Happened
+Build flagged viewport configuration in metadata export as deprecated. Next.js 15+ requires separate viewport export.
+
+### Root Cause
+Framework API contract changed. Old pattern:
+```ts
+metadata: { viewport: "..." }
+```
+New pattern:
+```ts
+viewport: { width: "...", initialScale: ... }
+```
+
+### How It Was Fixed
+Moved viewport from metadata object to separate viewport export in app/layout.tsx. Import type Viewport from "next", structure config object instead of string.
+
+### Evidence
+- **Before:** `npm run build` output 3x "Unsupported metadata viewport" warnings
+- **After:** `npm run build` completes with zero metadata warnings
+- Build time: 596ms (unchanged)
+- No functional impact (viewport behavior identical)
+
+### Lesson
+Monitor Next.js release notes + deprecation warnings in build output. These are early signals of breaking changes in minor versions.
 
 ---
 

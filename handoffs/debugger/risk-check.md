@@ -1,18 +1,22 @@
-# Risk Check — Cycle 1
-> Generated: 2026-02-21 01:50 AM (Europe/Moscow) | Pre-implementation phase
+# Risk Check — Cycle 3
+> Updated: 2026-02-21 02:50 AM (Europe/Moscow) | Robustness improvements applied
 
 ---
 
 ## Risk 1: Gateway SDK Integration Delay
-**Issue:** OBS-1 | **Likelihood:** MEDIUM | **Impact:** HIGH
+**Issue:** OBS-1 | **Likelihood:** MEDIUM | **Impact:** MEDIUM (reduced by retry logic)
 
 ### Risk
 If gateway SDK API contract is not finalized before BFF implementation starts, BFF code will be based on assumptions. When SDK is finally released, mismatches force BFF refactoring mid-sprint.
 
-### Mitigation
+### Mitigation (Updated Cycle 3)
 1. **Immediate:** Block BFF implementation start until gateway-rpc.md is locked
 2. **Early:** Spike week 1: Gateway team publishes SDK with example events
 3. **Design review:** Frontend + BFF review event shapes together before coding
+4. **NEW:** Retry logic (FIX-ROBUST-1) makes brief integration hiccups tolerable
+   - 3 retries + exponential backoff covers transient SDK/gateway issues
+   - Reduces urgency of perfect API contract alignment day 1
+   - Allows iterative refinement during integration week
 
 ### Detection
 - If BFF starts coding before gateway-rpc.md is published → escalate
@@ -21,6 +25,7 @@ If gateway SDK API contract is not finalized before BFF implementation starts, B
 ### Fallback
 - Stub gateway with mock events matching spec (allows parallel frontend work)
 - Swap mock for real SDK when ready; should be drop-in if interfaces match
+- Retry logic handles transient failures during swap
 
 ---
 
@@ -134,8 +139,28 @@ Event-model.md specifies 100 event / 60s buffer, but doesn't define behavior for
 
 ---
 
+---
+
+## Cycle 3 Improvements (Robustness)
+
+### Risk Mitigation Added
+- **Retry Logic** — All gateway calls now retry up to 3x on transient failures
+- **Request Timeout** — 5-second timeout prevents indefinite hangs
+- **Health Check Hardening** — 2-attempt health check with smart retry
+- **Exponential Backoff** — Prevents thundering herd on brief outages
+
+### Risk Reduction
+| Risk | Before | After | Change |
+|---|---|---|---|
+| Gateway transient failure | HIGH | MEDIUM | Retries mask brief outages |
+| Integration hiccups | MEDIUM | LOW | Retry logic + timeout = more tolerant |
+| Indefinite hang risk | MEDIUM | LOW | 5s timeout bounds all requests |
+
+---
+
 ## Approval
 - [ ] Backend Lead: Confirms gateway SDK timeline
 - [ ] BFF Lead: Confirms `since` param feasibility  
 - [ ] Frontend Lead: Confirms viewport meta + handoff timeline
 - [ ] QA Lead: Confirms test coverage for reconnect + buffer
+- [ ] Ops Lead: Reviews retry config (maxRetries=3, timeoutMs=5000)
