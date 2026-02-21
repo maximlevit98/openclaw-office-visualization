@@ -1,11 +1,36 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 5 — Styling & Accessibility Refinement)  
-> **Implementation Status:** ✅ Cycle 5 Design Token Alignment Complete
+> Last updated: 2026-02-21 (Cycle 7 — Sidebar Filter & Interactions)  
+> **Implementation Status:** ✅ Cycle 7 Filter & Session Row Interactions Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+
+---
+
+## 🎨 **CYCLE 7 DELTA — Sidebar Filter & Session Row Interactions**
+
+**Direct Code Impact (Feb 21, 06:10 Moscow)**
+
+### Sidebar Component
+- ✅ **Filter input:** Added real-time search filtering for sessions (by label or key)
+- ✅ **Filter styling:** Properly spaced in container with border-bottom divider
+- ✅ **Clear button:** Appears only when filter has text, removes filter on click
+- ✅ **Filter applied to both layouts:** Desktop sidebar and tablet overlay both support filtering
+- ✅ **Accessibility:** Added aria-labels for filter input and clear button
+
+### SessionList Component
+- ✅ **Hover state:** Added subtle background highlight on non-selected session rows
+- ✅ **Hover styling:** Uses bgPrimary background (warm, subtle) with smooth transition
+- ✅ **Better visual feedback:** Selected rows remain unchanged, hover state only for non-selected
+- ✅ **State management:** Added hoveredKey state to track hover without props drilling
+
+**Testing:**
+- ✅ Build succeeds (636ms, zero errors)
+- ✅ Filter works on both desktop and tablet
+- ✅ Hover states responsive and smooth
+- ✅ All responsive breakpoints verified
 
 ---
 
