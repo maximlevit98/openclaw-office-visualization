@@ -1,11 +1,51 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 9 — Message Preview & Timestamps)  
-> **Implementation Status:** ✅ Cycle 9 Message Preview & Timestamps Complete
+> Last updated: 2026-02-21 (DES-301 & Cycle 11 — Control Panel Spacing Tightened)  
+> **Implementation Status:** ✅ DES-301: Visual Rhythm Improved
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+
+---
+
+## 🎨 **DES-302 — Expanded Last Run Readability**
+
+**Direct Code Impact (Feb 21, 14:44 Moscow)**
+
+- ✅ **Task:** DES-302 — Improve expanded Last Run readability (header, body, overflow)
+- ✅ **Changes:** (1) `summaryExpanded` padding `md` → `lg` (12px → 16px); (2) line-height 1.65 → 1.8; (3) added `word-break: break-word`
+- ✅ **File:** `app/control/page.tsx` (lines 1967–1977)
+- ✅ **Build:** ✅ Pass (0 errors, `/control` 11.3kB)
+- ✅ **Next:** Polish header metadata formatting (status/duration row)
+
+## 🎨 **DES-301 — Control Panel: Tighten Visual Rhythm & Spacing**
+
+**Direct Code Impact (Feb 21, 14:43 Moscow)**
+
+### Control Panel (`/control` page)
+- ✅ **Task:** DES-301 — Tighten visual rhythm, spacing, hierarchy, compactness
+- ✅ **Change:** Reduced page layout padding + gaps from `SPACING.lg` (16px) → `SPACING.md` (12px)
+- ✅ **File:** `app/control/page.tsx` (lines 1316–1322)
+- ✅ **Build:** ✅ Succeeded — 0 errors, `/control` route 11.3kB
+- ✅ **Next:** Review section-level gaps (projectsSection, detailPanel) for further compactness pass
+
+---
+
+## 🎨 **CYCLE 10 DELTA — Status Badge Pill Visual Refinement**
+
+**Direct Code Impact (Feb 21, 12:27 Moscow)**
+
+### StatusBadge Component
+- ✅ **Pill variant background:** Changed from solid `bgPrimary` to subtle color wash `${color}08` (8% alpha)
+- ✅ **Pill variant border:** Updated from solid `${color}` to semi-transparent `${color}30` (19% alpha) for softer edge
+- ✅ **Better color hierarchy:** Status badges now blend with background while maintaining semantic color signal
+- ✅ **File:** `app/components/StatusBadge.tsx`
+
+**Testing:**
+- ✅ Build succeeds (no errors)
+- ✅ All status colors render correctly with new alpha values
+- ✅ Pill variant maintains semantic distinction while improving visual softness
 
 ---
 

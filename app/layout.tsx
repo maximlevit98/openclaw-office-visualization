@@ -19,56 +19,40 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+        />
         <style>{`
           :root {
-            /* Base Colors (Warm Neutrals) */
-            --bg-primary: #FAF8F5;
-            --bg-surface: #FFFFFF;
-            --bg-sidebar: #F3F0EB;
-            --border-default: #E5E0D8;
-            --border-subtle: #EDE9E3;
-            --text-primary: #1A1816;
-            --text-secondary: #6B635A;
-            --text-tertiary: #9E958A;
-
-            /* Status Palette */
-            --status-idle: #8B9E7C;
-            --status-thinking: #D4A843;
-            --status-tool: #5B8ABF;
-            --status-error: #C45D4E;
-            --status-offline: #B5AFA6;
-
-            /* Accent */
-            --accent-primary: #C45A2C;
-            --accent-hover: #A8492A;
-            --unread-dot: #C45A2C;
-
-            /* Typography */
-            --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Monaco', monospace;
-
-            /* Spacing */
+            --bg-primary: #d7f7b0;
+            --bg-surface: #f6f4cf;
+            --bg-sidebar: #cde56f;
+            --border-default: #1a2238;
+            --border-subtle: #34436e;
+            --text-primary: #141b2d;
+            --text-secondary: #2d3a63;
+            --text-tertiary: #4f5c86;
+            --accent-primary: #ff5f2e;
+            --accent-hover: #ff8448;
+            --font-family: 'Press Start 2P', 'VT323', monospace;
+            --font-mono: 'VT323', 'Courier New', monospace;
             --space-xs: 4px;
             --space-sm: 8px;
             --space-md: 12px;
             --space-lg: 16px;
             --space-xl: 20px;
             --space-xxl: 24px;
-
-            /* Radius */
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --radius-full: 9999px;
-
-            /* Shadows */
-            --shadow-card: 0 1px 3px rgba(26, 24, 22, 0.06), 0 1px 2px rgba(26, 24, 22, 0.04);
-            --shadow-panel: 0 4px 12px rgba(26, 24, 22, 0.08);
-            --shadow-hover: 0 4px 16px rgba(26, 24, 22, 0.12);
-
-            /* Transitions */
-            --transition-fast: 150ms ease-out;
-            --transition-normal: 200ms ease-in-out;
+            --radius-sm: 0px;
+            --radius-md: 2px;
+            --radius-lg: 4px;
+            --shadow-card: 3px 3px 0 0 rgba(20, 27, 45, 0.42);
+            --shadow-panel: 5px 5px 0 0 rgba(20, 27, 45, 0.52);
+            --shadow-hover: 7px 7px 0 0 rgba(20, 27, 45, 0.62);
+            --transition-fast: 120ms steps(2, end);
+            --transition-normal: 180ms steps(2, end);
           }
 
           * {
@@ -86,129 +70,100 @@ export default function RootLayout({
           body {
             font-family: var(--font-family);
             background-color: var(--bg-primary);
+            background-image:
+              linear-gradient(rgba(26, 34, 56, 0.14) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(26, 34, 56, 0.14) 1px, transparent 1px),
+              radial-gradient(circle at 20% 16%, #fff9cf 0%, #d7f7b0 50%, #cde56f 100%);
+            background-size: 24px 24px, 24px 24px, 100% 100%;
             color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            image-rendering: pixelated;
+            letter-spacing: 0.02em;
+            position: relative;
           }
 
           #__next {
             display: contents;
           }
 
-          /* Animations */
-          @keyframes pulse {
+          body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.08;
+            background: repeating-linear-gradient(
+              to bottom,
+              rgba(20, 27, 45, 0.9) 0px,
+              rgba(20, 27, 45, 0.9) 1px,
+              transparent 1px,
+              transparent 3px
+            );
+            z-index: 999;
+          }
+
+          @keyframes pixelPulse {
             0%, 100% {
-              opacity: 0.6;
+              opacity: 0.5;
             }
             50% {
               opacity: 1;
             }
           }
 
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-
-          @keyframes slideInLeft {
-            from {
-              transform: translateX(-100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
-
-          /* Desktop: 3-column layout (280px sidebar | 1fr chat | 300px office) */
-          @media (min-width: 1024px) {
-            [data-layout="desktop"] {
-              display: grid;
-              grid-template-columns: 280px 1fr 300px;
-              grid-template-rows: 1fr;
-              gap: 0;
-              height: 100vh;
-            }
-          }
-
-          /* Tablet: 2-column layout (64px sidebar strip | 1fr chat + top office strip) */
-          @media (max-width: 1023px) and (min-width: 768px) {
-            [data-layout="tablet"] {
-              display: grid;
-              grid-template-columns: 64px 1fr;
-              grid-template-rows: auto 1fr;
-              gap: 0;
-              height: 100vh;
-            }
-
-            [data-office-strip] {
-              display: flex;
-              gap: var(--space-sm);
-              overflow-x: auto;
-              padding: var(--space-md) var(--space-lg);
-              border-bottom: 1px solid var(--border-default);
-              align-items: center;
-              grid-column: 2;
-              grid-row: 1;
-            }
-          }
-
-          /* Mobile: deferred */
-          @media (max-width: 767px) {
-            [data-layout="mobile"] {
-              display: flex;
-              flex-direction: column;
-            }
-          }
-
-          /* Scrollbar styling — warm, subtle */
+          /* Scrollbar styling */
           ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
           }
 
           ::-webkit-scrollbar-track {
-            background: transparent;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-default);
           }
 
           ::-webkit-scrollbar-thumb {
-            background: var(--border-default);
-            border-radius: var(--radius-sm);
+            background: var(--accent-primary);
+            border: 2px solid var(--border-default);
           }
 
           ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-tertiary);
+            background: var(--accent-hover);
           }
 
-          /* Focus-visible for accessibility */
+          input,
+          textarea {
+            border: 2px solid var(--border-default);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border-radius: 0;
+            box-shadow: var(--shadow-card);
+          }
+
+          button {
+            border: 2px solid var(--border-default);
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            border-radius: 0;
+            box-shadow: var(--shadow-card);
+            cursor: pointer;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+          }
+
+          button:hover {
+            background: var(--accent-hover);
+          }
+
+          button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 0 rgba(20, 27, 45, 0.42);
+          }
+
           input:focus-visible,
-          textarea:focus-visible {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 2px rgba(196, 90, 44, 0.15);
-          }
-
+          textarea:focus-visible,
           button:focus-visible {
-            outline: 2px solid var(--accent-primary);
+            outline: 2px solid var(--text-primary);
             outline-offset: 2px;
-          }
-
-          /* Fallback for focus (for older browsers) */
-          input:focus,
-          textarea:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 2px rgba(196, 90, 44, 0.15);
-          }
-
-          button:focus {
-            outline: 2px solid var(--accent-primary);
-            outline-offset: 2px;
+            animation: pixelPulse 0.8s steps(2, end) infinite;
           }
         `}</style>
       </head>

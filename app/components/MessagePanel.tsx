@@ -2,8 +2,16 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { Session, Message } from "@/lib/types";
-import { COLORS, TYPOGRAPHY, SPACING, TRANSITIONS, RADIUS, SHADOWS } from "@/lib/design-tokens";
+import {
+  COLORS,
+  TYPOGRAPHY,
+  SPACING,
+  TRANSITIONS,
+  RADIUS,
+  SHADOWS,
+} from "@/lib/design-tokens";
 import { FormattedMessage } from "./FormattedMessage";
+import { Locale, getStatusLabel } from "@/lib/i18n";
 
 interface MessagePanelProps {
   currentSession: Session | undefined;
@@ -13,7 +21,38 @@ interface MessagePanelProps {
   onRefresh: () => Promise<void>;
   isSending: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+  embedded?: boolean;
+  locale: Locale;
 }
+
+const TEXT = {
+  en: {
+    noSession: "NO SESSION SELECTED",
+    sync: "SYNC",
+    empty: "CHAT://EMPTY",
+    start: "START A NEW COMMAND",
+    emptySub: "Type task details and press SEND",
+    placeholder: "TYPE MESSAGE... (CMD+/ TO FOCUS)",
+    sending: "SENDING...",
+    send: "SEND",
+    thinking: "AGENT IS THINKING...",
+    tool: "TOOL",
+    refreshTitle: "Refresh messages",
+  },
+  ru: {
+    noSession: "СЕССИЯ НЕ ВЫБРАНА",
+    sync: "СИНК",
+    empty: "ЧАТ://ПУСТО",
+    start: "НАЧНИТЕ НОВУЮ КОМАНДУ",
+    emptySub: "Опишите задачу и нажмите ОТПРАВИТЬ",
+    placeholder: "ВВЕДИТЕ СООБЩЕНИЕ... (CMD+/ ФОКУС)",
+    sending: "ОТПРАВКА...",
+    send: "ОТПРАВИТЬ",
+    thinking: "АГЕНТ ДУМАЕТ...",
+    tool: "ИНСТРУМЕНТ",
+    refreshTitle: "Обновить сообщения",
+  },
+} as const;
 
 export function MessagePanel({
   currentSession,
@@ -23,12 +62,14 @@ export function MessagePanel({
   onRefresh,
   isSending,
   inputRef,
+  embedded = false,
+  locale,
 }: MessagePanelProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const t = TEXT[locale];
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -55,63 +96,57 @@ export function MessagePanel({
   };
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
+    <div
+      style={{
+        ...styles.container,
+        ...(embedded ? styles.containerEmbedded : null),
+      }}
+    >
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <h2 style={styles.sessionTitle}>
-            {currentSession?.label || "No session selected"}
-          </h2>
-          {currentSession?.status && (
-            <span style={styles.badge}>
-              {currentSession.status === "active" ? "🟢" : "⚪"}{" "}
-              {currentSession.status}
-            </span>
-          )}
+          <h2 style={styles.sessionTitle}>{currentSession?.label || t.noSession}</h2>
+          {currentSession?.status && <span style={styles.badge}>{getStatusLabel(currentSession.status, locale)}</span>}
         </div>
         <button
-          style={styles.refreshButton}
+          style={{
+            ...styles.refreshButton,
+            opacity: isSending || isLoading ? 0.6 : 1,
+            cursor: isSending || isLoading ? "not-allowed" : "pointer",
+          }}
           onClick={onRefresh}
           disabled={isSending || isLoading}
-          title="Refresh messages"
+          title={t.refreshTitle}
         >
-          ↻ Refresh
+          {t.sync}
         </button>
       </div>
 
-      {/* Messages Area */}
       <div style={styles.messagesContainer}>
         {messages.length === 0 ? (
           <div style={styles.emptyState}>
-            <p style={styles.emptyIcon}>💬</p>
-            <p style={styles.emptyText}>No messages yet</p>
-            <p style={styles.emptySubtext}>
-              Start a conversation or send a command
-            </p>
+            <p style={styles.emptyIcon}>{t.empty}</p>
+            <p style={styles.emptyText}>{t.start}</p>
+            <p style={styles.emptySubtext}>{t.emptySub}</p>
           </div>
         ) : (
           messages.map((msg, idx) => {
-          // Group consecutive messages from the same role
-          const isGroupStart =
-            idx === 0 || messages[idx - 1].role !== msg.role;
-          const isGroupEnd =
-            idx === messages.length - 1 ||
-            messages[idx + 1].role !== msg.role;
+            const isGroupStart = idx === 0 || messages[idx - 1].role !== msg.role;
+            const isGroupEnd = idx === messages.length - 1 || messages[idx + 1].role !== msg.role;
 
-          return (
-            <MessageBubble
-              key={idx}
-              message={msg}
-              isGroupStart={isGroupStart}
-              isGroupEnd={isGroupEnd}
-            />
-          );
-        })
+            return (
+              <MessageBubble
+                key={idx}
+                message={msg}
+                isGroupStart={isGroupStart}
+                isGroupEnd={isGroupEnd}
+                locale={locale}
+              />
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Footer */}
       <div style={styles.footer}>
         <div style={styles.inputGroup}>
           <textarea
@@ -120,26 +155,23 @@ export function MessagePanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message... (Cmd+/ to focus, Shift+Enter for newline)"
+            placeholder={t.placeholder}
             disabled={isSending || isLoading}
             rows={3}
           />
           <button
             style={{
               ...styles.sendButton,
-              opacity: input.trim() && !isSending ? 1 : 0.5,
-              cursor:
-                input.trim() && !isSending ? "pointer" : "not-allowed",
+              opacity: input.trim() && !isSending ? 1 : 0.55,
+              cursor: input.trim() && !isSending ? "pointer" : "not-allowed",
             }}
             onClick={handleSend}
             disabled={!input.trim() || isSending}
           >
-            {isSending ? "⏳ Sending..." : "Send"}
+            {isSending ? t.sending : t.send}
           </button>
         </div>
-        {isSending && (
-          <p style={styles.statusText}>Waiting for response...</p>
-        )}
+        {isSending && <p style={styles.statusText}>{t.thinking}</p>}
       </div>
     </div>
   );
@@ -149,11 +181,13 @@ interface MessageBubbleProps {
   message: Message;
   isGroupStart?: boolean;
   isGroupEnd?: boolean;
+  locale: Locale;
 }
 
-function MessageBubble({ message, isGroupStart = true, isGroupEnd = true }: MessageBubbleProps) {
+function MessageBubble({ message, isGroupEnd = true, locale }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
+  const t = TEXT[locale];
 
   if (isSystem) {
     return (
@@ -175,31 +209,20 @@ function MessageBubble({ message, isGroupStart = true, isGroupEnd = true }: Mess
         style={{
           ...styles.messageBubble,
           backgroundColor: isUser ? COLORS.accentPrimary : COLORS.bgSurface,
-          color: isUser ? COLORS.bgPrimary : COLORS.textPrimary,
-          borderBottom: isUser
-            ? "none"
-            : `1px solid ${COLORS.borderDefault}`,
-          borderTopLeftRadius: isUser || !isGroupStart ? RADIUS.md : RADIUS.md,
-          borderTopRightRadius: !isUser || !isGroupStart ? RADIUS.md : RADIUS.md,
-          borderBottomLeftRadius: isUser || !isGroupEnd ? RADIUS.md : RADIUS.md,
-          borderBottomRightRadius: !isUser || !isGroupEnd ? RADIUS.md : RADIUS.md,
+          color: COLORS.textPrimary,
+          borderColor: isUser ? COLORS.borderDefault : COLORS.borderSubtle,
         }}
       >
         {message.toolName && (
-          <p style={styles.toolName}>🔧 {message.toolName}</p>
+          <p style={styles.toolName}>
+            {t.tool}: {message.toolName}
+          </p>
         )}
         <div style={styles.messageContent}>
           <FormattedMessage content={message.content} isUser={isUser} />
         </div>
         {message.timestamp && isGroupEnd && (
-          <p
-            style={{
-              ...styles.messageTimestamp,
-              color: isUser
-                ? "rgba(255,255,255,0.7)"
-                : COLORS.textTertiary,
-            }}
-          >
+          <p style={styles.messageTimestamp}>
             {new Date(message.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -216,8 +239,15 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     height: "100vh",
-    backgroundColor: COLORS.bgPrimary,
-    borderRight: `1px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgSurface,
+    borderRight: `3px solid ${COLORS.borderDefault}`,
+    borderLeft: `3px solid ${COLORS.borderDefault}`,
+  } as React.CSSProperties,
+
+  containerEmbedded: {
+    height: "100%",
+    borderLeft: "none",
+    borderRight: "none",
   } as React.CSSProperties,
 
   header: {
@@ -225,8 +255,8 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: SPACING.lg,
-    borderBottom: `1px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSurface,
+    borderBottom: `3px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgPrimary,
     gap: SPACING.lg,
   } as React.CSSProperties,
 
@@ -234,34 +264,40 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: SPACING.md,
+    minWidth: 0,
   } as React.CSSProperties,
 
   sessionTitle: {
-    fontSize: TYPOGRAPHY.textLg,
+    fontSize: TYPOGRAPHY.textSm,
     fontWeight: TYPOGRAPHY.weight600,
     margin: 0,
     color: COLORS.textPrimary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 
   badge: {
     fontSize: TYPOGRAPHY.textXs,
-    backgroundColor: COLORS.bgPrimary,
-    color: COLORS.textSecondary,
+    backgroundColor: COLORS.statusOnline,
+    color: COLORS.textPrimary,
     padding: `${SPACING.xs} ${SPACING.sm}`,
-    borderRadius: RADIUS.full,
+    border: `2px solid ${COLORS.borderDefault}`,
     whiteSpace: "nowrap" as const,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   refreshButton: {
     padding: `${SPACING.sm} ${SPACING.md}`,
     backgroundColor: COLORS.accentPrimary,
-    color: COLORS.bgPrimary,
-    border: "none",
-    borderRadius: RADIUS.sm,
+    color: COLORS.textPrimary,
+    border: `2px solid ${COLORS.borderDefault}`,
     cursor: "pointer",
-    fontSize: TYPOGRAPHY.textSm,
-    fontWeight: TYPOGRAPHY.weight500,
-    transition: `all ${TRANSITIONS.fast}`,
+    fontSize: TYPOGRAPHY.textXs,
+    fontWeight: TYPOGRAPHY.weight600,
+    transition: `transform ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
+    boxShadow: SHADOWS.card,
+    flexShrink: 0,
   } as React.CSSProperties,
 
   messagesContainer: {
@@ -280,24 +316,30 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
+    border: `3px dashed ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: SHADOWS.card,
+    padding: SPACING.xl,
+    textAlign: "center" as const,
   } as React.CSSProperties,
 
   emptyIcon: {
-    fontSize: "48px",
+    fontSize: TYPOGRAPHY.textSm,
     margin: 0,
+    color: COLORS.textSecondary,
   } as React.CSSProperties,
 
   emptyText: {
-    fontSize: TYPOGRAPHY.textLg,
-    fontWeight: TYPOGRAPHY.weight500,
+    fontSize: TYPOGRAPHY.textSm,
+    fontWeight: TYPOGRAPHY.weight600,
     color: COLORS.textPrimary,
     margin: 0,
     marginTop: SPACING.lg,
   } as React.CSSProperties,
 
   emptySubtext: {
-    fontSize: TYPOGRAPHY.textSm,
-    color: COLORS.textTertiary,
+    fontSize: TYPOGRAPHY.textXs,
+    color: COLORS.textSecondary,
     margin: 0,
     marginTop: SPACING.sm,
   } as React.CSSProperties,
@@ -308,9 +350,10 @@ const styles = {
   } as React.CSSProperties,
 
   messageBubble: {
-    maxWidth: "75%",
+    maxWidth: "78%",
     padding: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
+    border: `3px solid ${COLORS.borderDefault}`,
     wordWrap: "break-word" as const,
     whiteSpace: "pre-wrap" as const,
     boxShadow: SHADOWS.card,
@@ -319,7 +362,7 @@ const styles = {
   messageContent: {
     margin: 0,
     fontSize: TYPOGRAPHY.textSm,
-    lineHeight: "1.5",
+    lineHeight: "1.7",
   } as React.CSSProperties,
 
   toolName: {
@@ -327,33 +370,33 @@ const styles = {
     marginBottom: SPACING.sm,
     fontSize: TYPOGRAPHY.textXs,
     fontWeight: TYPOGRAPHY.weight600,
-    opacity: 0.8,
+    color: COLORS.textSecondary,
   } as React.CSSProperties,
 
   messageTimestamp: {
     margin: 0,
     marginTop: SPACING.sm,
     fontSize: TYPOGRAPHY.textXs,
+    color: COLORS.textSecondary,
   } as React.CSSProperties,
 
   systemMessage: {
     padding: SPACING.md,
-    backgroundColor: COLORS.bgSurface,
-    borderLeft: `3px solid ${COLORS.statusThinking}`,
-    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.statusThinking,
+    border: `3px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   systemText: {
     margin: 0,
     fontSize: TYPOGRAPHY.textSm,
-    color: COLORS.textSecondary,
-    fontStyle: "italic",
+    color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   footer: {
     padding: SPACING.lg,
-    borderTop: `1px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSurface,
+    borderTop: `3px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgPrimary,
     gap: SPACING.md,
     display: "flex",
     flexDirection: "column" as const,
@@ -368,31 +411,34 @@ const styles = {
     flex: 1,
     padding: SPACING.md,
     borderRadius: RADIUS.sm,
-    border: `1px solid ${COLORS.borderDefault}`,
+    border: `3px solid ${COLORS.borderDefault}`,
     fontSize: TYPOGRAPHY.textSm,
     fontFamily: TYPOGRAPHY.fontFamily,
-    backgroundColor: COLORS.bgPrimary,
+    backgroundColor: COLORS.bgSurface,
     color: COLORS.textPrimary,
     resize: "none" as const,
-    minHeight: "80px",
+    minHeight: "84px",
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   sendButton: {
     padding: `${SPACING.md} ${SPACING.lg}`,
     backgroundColor: COLORS.accentPrimary,
-    color: COLORS.bgPrimary,
-    border: "none",
+    color: COLORS.textPrimary,
+    border: `3px solid ${COLORS.borderDefault}`,
     borderRadius: RADIUS.sm,
     fontWeight: TYPOGRAPHY.weight600,
     cursor: "pointer",
-    transition: `all ${TRANSITIONS.fast}`,
-    fontSize: TYPOGRAPHY.textSm,
+    transition: `transform ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
+    fontSize: TYPOGRAPHY.textXs,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   statusText: {
     margin: 0,
     fontSize: TYPOGRAPHY.textXs,
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     textAlign: "center" as const,
+    animation: "pixelPulse 1.2s steps(2, end) infinite",
   } as React.CSSProperties,
 } as const;

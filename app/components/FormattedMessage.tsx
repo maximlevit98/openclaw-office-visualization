@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from "@/lib/design-tokens";
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from "@/lib/design-tokens";
 import { parseMarkdown, hasCodeBlock } from "@/lib/markdown";
 
 interface FormattedMessageProps {
@@ -99,21 +99,24 @@ const styles = {
 
   inlineCode: {
     backgroundColor: COLORS.bgPrimary,
-    color: COLORS.accentPrimary,
+    color: COLORS.textPrimary,
     padding: `${SPACING.xs} ${SPACING.sm}`,
+    border: `2px solid ${COLORS.borderDefault}`,
     borderRadius: RADIUS.sm,
     fontFamily: TYPOGRAPHY.fontMono,
-    fontSize: "0.9em",
+    fontSize: "1em",
   } as React.CSSProperties,
 
   codeBlock: {
-    backgroundColor: "#1E1E1E",
-    color: "#D4D4D4",
+    backgroundColor: "#19223b",
+    color: "#f6f4cf",
     padding: SPACING.lg,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
+    border: `3px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
     overflow: "auto" as const,
     fontFamily: TYPOGRAPHY.fontMono,
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textBase,
     margin: 0,
     marginTop: SPACING.sm,
     marginBottom: SPACING.sm,
@@ -126,7 +129,7 @@ const styles = {
   } as React.CSSProperties,
 
   listBullet: {
-    color: COLORS.textSecondary,
+    color: COLORS.accentPrimary,
     fontWeight: TYPOGRAPHY.weight600,
     flexShrink: 0,
   } as React.CSSProperties,

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+status_file="PROJECT_STATUS.md"
+zero="0000000000000000000000000000000000000000"
+violations=()
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ "${local_sha}" == "${zero}" ]]; then
+    continue
+  fi
+
+  if [[ "${remote_sha}" == "${zero}" ]]; then
+    commit_range="${local_sha}"
+  else
+    commit_range="${remote_sha}..${local_sha}"
+  fi
+
+  while read -r commit; do
+    [[ -z "${commit}" ]] && continue
+    if ! git diff-tree --no-commit-id --name-only -r -m "${commit}" | grep -qx "${status_file}"; then
+      violations+=("${commit}")
+    fi
+  done < <(git rev-list "${commit_range}")
+done
+
+if [[ "${#violations[@]}" -gt 0 ]]; then
+  echo "[HOOK] Push blocked."
+  echo "Every pushed commit must update ${status_file}."
+  echo "Commits without ${status_file}:"
+  printf '  - %s\n' "${violations[@]}"
+  exit 1
+fi
+
+head_content="$(cat "${status_file}" 2>/dev/null || true)"
+if [[ -z "${head_content}" ]]; then
+  echo "[HOOK] Push blocked: ${status_file} missing in working tree."
+  exit 1
+fi
+
+if ! grep -q "^## Сделано" <<<"${head_content}" || ! grep -q "^## Следующий шаг" <<<"${head_content}"; then
+  echo "[HOOK] Push blocked: ${status_file} must contain both sections:"
+  echo "  - ## Сделано"
+  echo "  - ## Следующий шаг"
+  exit 1
+fi

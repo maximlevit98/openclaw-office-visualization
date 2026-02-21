@@ -1,25 +1,26 @@
 # Office Visualization — Execution Task Board
 
-> Updated: 2026-02-21 07:04 (Cycle 7 — Phase 2 Code Ready to Commit)
+> Updated: 2026-02-21 12:50 (Cycle 7 — Phase 2 In Motion, All Teams Active)
 
 ## 🎯 PHASE 2: LIVE PRESENCE & POLISH (CODE READY)
 
 **Goal:** Commit 6 Phase 2 features. Complete usePresence hook. Ship Phase 2.
 
-### Current Status (Cycle 7)
-- ✅ **Phase 1 Complete:** Shipped + producer approved (1ab6a05)
-- ✅ **TASK-020b DONE:** Real SSE stream (committed 4aea0a2)
-- ✅ **6 COMPONENTS BUILT:** SessionSearch, StatusBadge, OfficeStrip + utilities (UNTRACKED)
-- ⏳ **TASK-020a NEXT:** usePresence hook + wiring (1 hour)
-- 🎯 **Timeline:** 1–2 hours to Phase 2 complete
+### Current Status (Cycle 7 — 12:50 Moscow)
+- ✅ **Phase 1 Complete:** Producer approved (1ab6a05)
+- ✅ **SSE Stream Shipped:** commit 4aea0a2 (real-time presence)
+- 🟡 **Frontend: Components + Hook** — 8 files in flight (StatusBadge contrast fix shipped)
+- 🟡 **Backend: Active** — dev-log updated, API routes evolving
+- ✅ **QA: BUILD PASS** — 547ms, 111 kB, 12 routes, zero bugs
+- 🎯 **Timeline:** Phase 2 near completion
 
 ---
 
 ## 🟡 IN PROGRESS (Cycle 7 — FINAL PUSH)
 
-### ✅ PHASE 2 COMPONENTS & UTILITIES (UNTRACKED — COMMIT NOW)
-- **Status:** BUILT (7 files, ready to stage)
-- **Delivery:**
+### ✅ PHASE 2 COMPONENTS & UTILITIES (STAGED — READY TO PUSH)
+- **Status:** STAGED in git index (7 files ready)
+- **Files Queued:**
   - `app/components/SessionSearch.tsx` — Real-time search filter
   - `app/components/StatusBadge.tsx` — Reusable status display (3 variants)
   - `app/components/OfficeStrip.tsx` — Tablet-responsive agent list
@@ -27,13 +28,8 @@
   - `lib/hooks.ts` — useKeyboardShortcut + other utilities
   - `lib/utils.ts` — Helper utilities
   - `__tests__/*.js` — New client-side tests
-- **Action:** 
-  ```bash
-  git add app/components/ lib/client-fetch.ts lib/hooks.ts lib/utils.ts __tests__/
-  git commit -m "feat: add Phase 2 components, utilities, and tests"
-  npm run build && npm test && git push
-  ```
-- **Timeline:** 10 minutes to commit
+- **Next:** Push after usePresence hook (TASK-020a) complete
+- **Timeline:** 5 minutes to final commit + push
 
 ---
 
@@ -49,24 +45,18 @@
 
 ---
 
-### 🟡 TASK-020a: `usePresence()` React Hook (START NOW)
+### 🟡 TASK-020a: `usePresence()` React Hook (IN PROGRESS)
 - **Owner:** Frontend Engineer
-- **Status:** READY TO START
-- **Time:** 20 minutes
+- **Status:** READY TO CODE (~30 min remaining)
 - **File:** Create `hooks/usePresence.ts`
-- **What:** React hook that connects to `/api/stream` SSE
-  - EventSource("/api/stream") subscription
-  - JSON parsing of incoming events
-  - Updates agents when type === "agent_status"
-  - Cleanup on unmount
+- **Spec:** React hook for `/api/stream` SSE subscription
+  - EventSource("/api/stream") init on mount
+  - JSON parse + agent_status filter
+  - Real-time agent list updates
+  - Cleanup on unmount (no leaks)
   - Returns { agents, connected, error }
-- **Code Template:** See `CYCLE_7_EXECUTION.md` (copy/paste ready)
-- **Acceptance:**
-  - [ ] Connects to SSE on mount
-  - [ ] Parses JSON events correctly
-  - [ ] Updates agent list in real-time
-  - [ ] Closes on unmount (no leaks)
-  - [ ] `npm run build` succeeds
+- **Blockers:** None (SSE backend ready in 4aea0a2)
+- **Acceptance:** Build succeeds, no console errors, SSE connection logs
 
 ---
 

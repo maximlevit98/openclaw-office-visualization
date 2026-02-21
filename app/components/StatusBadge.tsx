@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, getStatusColor, getStatusLabel } from "@/lib/design-tokens";
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, getStatusColor, getStatusLabel } from "@/lib/design-tokens";
 
 interface StatusBadgeProps {
   status?: string;
@@ -60,21 +60,23 @@ export function StatusBadge({
           alignItems: "center",
           gap: SPACING.sm,
           padding: paddingMap[size],
-          backgroundColor: COLORS.bgPrimary,
-          color: color,
-          borderRadius: RADIUS.full,
+          backgroundColor: COLORS.bgSurface,
+          color: COLORS.textPrimary,
+          borderRadius: RADIUS.sm,
           fontSize: fontSizeMap[size],
           fontWeight: TYPOGRAPHY.weight500,
-          border: `1px solid ${color}`,
+          border: `2px solid ${COLORS.borderDefault}`,
+          boxShadow: SHADOWS.card,
           whiteSpace: "nowrap" as const,
         }}
       >
         <div
           style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: RADIUS.full,
+            width: "8px",
+            height: "8px",
+            borderRadius: RADIUS.sm,
             backgroundColor: color,
+            border: `1px solid ${COLORS.borderDefault}`,
           }}
         />
         {label}
@@ -90,15 +92,21 @@ export function StatusBadge({
         alignItems: "center",
         gap: SPACING.sm,
         fontSize: TYPOGRAPHY.textSm,
-        color: COLORS.textSecondary,
+        color: COLORS.textPrimary,
+        fontWeight: TYPOGRAPHY.weight500,
+        backgroundColor: COLORS.bgSurface,
+        border: `2px solid ${COLORS.borderDefault}`,
+        boxShadow: SHADOWS.card,
+        padding: `${SPACING.xs} ${SPACING.sm}`,
       }}
     >
       <div
         style={{
-          width: "6px",
-          height: "6px",
-          borderRadius: RADIUS.full,
+          width: "8px",
+          height: "8px",
+          borderRadius: RADIUS.sm,
           backgroundColor: color,
+          border: `1px solid ${COLORS.borderDefault}`,
           flexShrink: 0,
         }}
       />

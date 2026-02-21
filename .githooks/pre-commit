@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+status_file="PROJECT_STATUS.md"
+
+if ! git diff --cached --name-only --diff-filter=ACMRT | grep -qx "${status_file}"; then
+  echo "[HOOK] Commit blocked."
+  echo "Update ${status_file} in every commit with sections:"
+  echo "  - ## Сделано"
+  echo "  - ## Следующий шаг"
+  exit 1
+fi
+
+staged_content="$(git show ":${status_file}" 2>/dev/null || true)"
+if [[ -z "${staged_content}" ]]; then
+  echo "[HOOK] Commit blocked: staged ${status_file} is empty or missing."
+  exit 1
+fi
+
+if ! grep -q "^## Сделано" <<<"${staged_content}"; then
+  echo "[HOOK] Commit blocked: missing section '## Сделано' in staged ${status_file}."
+  exit 1
+fi
+
+if ! grep -q "^## Следующий шаг" <<<"${staged_content}"; then
+  echo "[HOOK] Commit blocked: missing section '## Следующий шаг' in staged ${status_file}."
+  exit 1
+fi
+
+done_block="$(awk '/^## Сделано/{flag=1;next}/^## /{if(flag)exit}flag{print}' <<<"${staged_content}" | tr -d '[:space:]')"
+next_block="$(awk '/^## Следующий шаг/{flag=1;next}/^## /{if(flag)exit}flag{print}' <<<"${staged_content}" | tr -d '[:space:]')"
+
+if [[ -z "${done_block}" ]]; then
+  echo "[HOOK] Commit blocked: section '## Сделано' must not be empty."
+  exit 1
+fi
+
+if [[ -z "${next_block}" ]]; then
+  echo "[HOOK] Commit blocked: section '## Следующий шаг' must not be empty."
+  exit 1
+fi

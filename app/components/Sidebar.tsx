@@ -1,8 +1,15 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Session } from "@/lib/types";
-import { COLORS, TYPOGRAPHY, SPACING, TRANSITIONS, BREAKPOINTS } from "@/lib/design-tokens";
+import {
+  COLORS,
+  TYPOGRAPHY,
+  SPACING,
+  TRANSITIONS,
+  BREAKPOINTS,
+  SHADOWS,
+} from "@/lib/design-tokens";
 
 interface SidebarProps {
   sessions: Session[];
@@ -22,15 +29,21 @@ export function Sidebar({
   searchInputRef,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const syncViewport = () => setIsDesktop(window.innerWidth >= BREAKPOINTS.tablet);
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
 
   const filteredSessions = useMemo(() => {
     if (!searchQuery.trim()) return sessions;
-    
+
     const query = searchQuery.toLowerCase();
     return sessions.filter(
-      (s) =>
-        (s.label || s.key).toLowerCase().includes(query) ||
-        s.key.toLowerCase().includes(query)
+      (s) => (s.label || s.key).toLowerCase().includes(query) || s.key.toLowerCase().includes(query)
     );
   }, [sessions, searchQuery]);
 
@@ -44,119 +57,113 @@ export function Sidebar({
     [filteredSessions]
   );
 
-  return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside style={styles.sidebarDesktop}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>OpenClaw</h1>
-          <p style={styles.subtitle}>Office</p>
-        </div>
-
-        {error && (
-          <div style={styles.errorBanner}>
-            <span style={styles.errorText}>⚠ {error}</span>
-          </div>
-        )}
-
-        {/* Search Input */}
-        <div style={styles.searchContainer}>
-          <input
-            ref={searchInputRef}
-            type="text"
-            style={styles.searchInput}
-            placeholder="Search sessions... (Cmd+K)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search sessions (press Cmd+K)"
-          />
-          {searchQuery && (
-            <button
-              style={styles.clearButton}
-              onClick={() => setSearchQuery("")}
-              title="Clear search"
-              aria-label="Clear search"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        <div style={styles.sessionList}>
-          {loading ? (
-            <div style={styles.loadingPlaceholder}>
-              <p style={styles.loadingText}>Loading...</p>
-            </div>
-          ) : filteredSessions.length === 0 ? (
-            <div style={styles.emptyState}>
-              <p style={styles.emptyText}>
-                {searchQuery ? "No sessions match" : "No sessions"}
-              </p>
-            </div>
-          ) : (
-            <>
-              {activeSessions.length > 0 && (
-                <div style={styles.sessionGroup}>
-                  <h3 style={styles.groupTitle}>
-                    Active <span style={styles.groupCount}>{activeSessions.length}</span>
-                  </h3>
-                  {activeSessions.map((session) => (
-                    <SessionItem
-                      key={session.key}
-                      session={session}
-                      isSelected={selectedSession === session.key}
-                      onSelect={() => onSelectSession(session.key)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {idleSessions.length > 0 && (
-                <div style={styles.sessionGroup}>
-                  <h3 style={styles.groupTitle}>
-                    Idle <span style={styles.groupCount}>{idleSessions.length}</span>
-                  </h3>
-                  {idleSessions.map((session) => (
-                    <SessionItem
-                      key={session.key}
-                      session={session}
-                      isSelected={selectedSession === session.key}
-                      onSelect={() => onSelectSession(session.key)}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </aside>
-
-      {/* Tablet/Mobile Icon Strip */}
+  if (!isDesktop) {
+    return (
       <div style={styles.sidebarMobile}>
         {loading ? (
-          <div style={styles.stripPlaceholder}>📡</div>
+          <div style={styles.stripPlaceholder}>...</div>
         ) : (
-          sessions.slice(0, 3).map((session) => (
+          sessions.slice(0, 4).map((session) => (
             <button
               key={session.key}
               style={{
                 ...styles.iconButton,
                 backgroundColor:
-                  selectedSession === session.key
-                    ? COLORS.accentPrimary
-                    : COLORS.bgSidebar,
+                  selectedSession === session.key ? COLORS.accentPrimary : COLORS.bgSurface,
+                boxShadow: selectedSession === session.key ? SHADOWS.panel : SHADOWS.card,
               }}
               onClick={() => onSelectSession(session.key)}
               title={session.label || session.key}
             >
-              <span style={styles.iconEmoji}>
-                {session.kind === "background" ? "⚙️" : "💬"}
-              </span>
+              <span style={styles.iconEmoji}>{session.kind === "background" ? "##" : ">>"}</span>
             </button>
           ))
         )}
       </div>
-    </>
+    );
+  }
+
+  return (
+    <aside style={styles.sidebarDesktop}>
+      <div style={styles.header}>
+        <h1 style={styles.title}>OPENCLAW HQ</h1>
+        <p style={styles.subtitle}>8-BIT OFFICE</p>
+      </div>
+
+      {error && (
+        <div style={styles.errorBanner}>
+          <span style={styles.errorText}>ALERT: {error}</span>
+        </div>
+      )}
+
+      <div style={styles.searchContainer}>
+        <input
+          ref={searchInputRef}
+          type="text"
+          style={styles.searchInput}
+          placeholder="FIND SESSION (CMD+K)"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Search sessions (press Cmd+K)"
+        />
+        {searchQuery && (
+          <button
+            style={styles.clearButton}
+            onClick={() => setSearchQuery("")}
+            title="Clear search"
+            aria-label="Clear search"
+          >
+            X
+          </button>
+        )}
+      </div>
+
+      <div style={styles.sessionList}>
+        {loading ? (
+          <div style={styles.loadingPlaceholder}>
+            <p style={styles.loadingText}>LOADING...</p>
+          </div>
+        ) : filteredSessions.length === 0 ? (
+          <div style={styles.emptyState}>
+            <p style={styles.emptyText}>{searchQuery ? "NO MATCHES" : "NO SESSIONS"}</p>
+          </div>
+        ) : (
+          <>
+            {activeSessions.length > 0 && (
+              <div style={styles.sessionGroup}>
+                <h3 style={styles.groupTitle}>
+                  ACTIVE <span style={styles.groupCount}>{activeSessions.length}</span>
+                </h3>
+                {activeSessions.map((session) => (
+                  <SessionItem
+                    key={session.key}
+                    session={session}
+                    isSelected={selectedSession === session.key}
+                    onSelect={() => onSelectSession(session.key)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {idleSessions.length > 0 && (
+              <div style={styles.sessionGroup}>
+                <h3 style={styles.groupTitle}>
+                  IDLE <span style={styles.groupCount}>{idleSessions.length}</span>
+                </h3>
+                {idleSessions.map((session) => (
+                  <SessionItem
+                    key={session.key}
+                    session={session}
+                    isSelected={selectedSession === session.key}
+                    onSelect={() => onSelectSession(session.key)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -171,93 +178,75 @@ function SessionItem({ session, isSelected, onSelect }: SessionItemProps) {
     <button
       style={{
         ...styles.sessionItem,
-        backgroundColor: isSelected
-          ? COLORS.accentPrimary
-          : "transparent",
-        color: isSelected ? COLORS.bgPrimary : COLORS.textPrimary,
+        backgroundColor: isSelected ? COLORS.accentPrimary : COLORS.bgSurface,
+        color: isSelected ? COLORS.textPrimary : COLORS.textPrimary,
+        boxShadow: isSelected ? SHADOWS.panel : SHADOWS.card,
       }}
       onClick={onSelect}
     >
       <div style={styles.sessionLabel}>
-        <span
-          style={{
-            ...styles.sessionIcon,
-            color: isSelected ? COLORS.bgPrimary : COLORS.textSecondary,
-          }}
-        >
-          {session.kind === "background" ? "⚙️" : "💬"}
-        </span>
+        <span style={styles.sessionIcon}>{session.kind === "background" ? "##" : ">>"}</span>
         <div style={styles.sessionContent}>
           <p style={styles.sessionName}>{session.label || session.key}</p>
           <p style={styles.sessionMeta}>
-            {session.status || "active"} • {session.activeMinutes || 0}m
+            {(session.status || "active").toUpperCase()} · {session.activeMinutes || 0}M
           </p>
         </div>
       </div>
-      {isSelected && (
-        <div
-          style={{
-            width: "4px",
-            height: "40%",
-            backgroundColor: COLORS.bgPrimary,
-            borderRadius: COLORS.bgPrimary,
-          }}
-        />
-      )}
+      {isSelected && <div style={styles.selectedIndicator} />}
     </button>
   );
 }
 
 const styles = {
   sidebarDesktop: {
-    display: "none",
-    "@media (min-width: 1024px)": {
-      display: "flex",
-      flexDirection: "column" as const,
-    },
-    width: "280px",
+    width: "290px",
     height: "100vh",
     backgroundColor: COLORS.bgSidebar,
-    borderRight: `1px solid ${COLORS.borderDefault}`,
+    borderRight: `3px solid ${COLORS.borderDefault}`,
     overflow: "hidden",
     overflowY: "auto" as const,
+    display: "flex",
     flexDirection: "column" as const,
+    boxShadow: SHADOWS.panel,
+    paddingBottom: SPACING.md,
   } as React.CSSProperties,
 
   sidebarMobile: {
     display: "flex",
-    "@media (min-width: 1024px)": {
-      display: "none",
-    },
     flexDirection: "column" as const,
     alignItems: "center",
-    gap: SPACING.sm,
-    width: "64px",
+    gap: SPACING.md,
+    width: "72px",
+    minWidth: "72px",
     height: "100vh",
     backgroundColor: COLORS.bgSidebar,
-    borderRight: `1px solid ${COLORS.borderDefault}`,
+    borderRight: `3px solid ${COLORS.borderDefault}`,
     padding: SPACING.md,
     overflow: "hidden",
     overflowY: "auto" as const,
+    boxShadow: SHADOWS.panel,
   } as React.CSSProperties,
 
   header: {
     padding: SPACING.xl,
-    textAlign: "center" as const,
-    borderBottom: `1px solid ${COLORS.borderDefault}`,
+    textAlign: "left" as const,
+    borderBottom: `3px solid ${COLORS.borderDefault}`,
+    backgroundColor: COLORS.bgSurface,
   } as React.CSSProperties,
 
   title: {
     fontSize: TYPOGRAPHY.textLg,
     fontWeight: TYPOGRAPHY.weight600,
-    color: COLORS.accentPrimary,
+    color: COLORS.textPrimary,
     margin: 0,
     marginBottom: SPACING.xs,
+    lineHeight: 1.4,
   } as React.CSSProperties,
 
   subtitle: {
     fontSize: TYPOGRAPHY.textXs,
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     margin: 0,
     fontWeight: TYPOGRAPHY.weight500,
   } as React.CSSProperties,
@@ -266,14 +255,15 @@ const styles = {
     backgroundColor: COLORS.statusError,
     padding: SPACING.md,
     margin: SPACING.md,
-    borderRadius: "6px",
-    borderLeft: `3px solid ${COLORS.textPrimary}`,
+    border: `3px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   errorText: {
-    color: COLORS.bgPrimary,
-    fontSize: TYPOGRAPHY.textSm,
-    fontWeight: TYPOGRAPHY.weight500,
+    color: COLORS.textPrimary,
+    fontSize: TYPOGRAPHY.textXs,
+    fontWeight: TYPOGRAPHY.weight600,
+    lineHeight: 1.6,
   } as React.CSSProperties,
 
   sessionList: {
@@ -283,27 +273,16 @@ const styles = {
     padding: SPACING.md,
   } as React.CSSProperties,
 
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.textXs,
-    fontWeight: TYPOGRAPHY.weight600,
-    color: COLORS.textTertiary,
-    textTransform: "uppercase" as const,
-    margin: 0,
-    marginBottom: SPACING.md,
-    letterSpacing: "0.5px",
-  } as React.CSSProperties,
-
   sessionItem: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
     padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    border: `1px solid ${COLORS.borderSubtle}`,
-    borderRadius: "8px",
+    marginBottom: SPACING.md,
+    border: `3px solid ${COLORS.borderDefault}`,
     cursor: "pointer",
-    transition: `all ${TRANSITIONS.fast}`,
+    transition: `transform ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
     fontSize: TYPOGRAPHY.textSm,
     fontWeight: TYPOGRAPHY.weight500,
   } as React.CSSProperties,
@@ -313,52 +292,72 @@ const styles = {
     alignItems: "center",
     gap: SPACING.md,
     flex: 1,
+    minWidth: 0,
   } as React.CSSProperties,
 
   sessionIcon: {
-    fontSize: "18px",
+    fontSize: TYPOGRAPHY.textSm,
+    fontWeight: TYPOGRAPHY.weight600,
+    color: COLORS.textSecondary,
+    flexShrink: 0,
   } as React.CSSProperties,
 
   sessionContent: {
     textAlign: "left" as const,
+    minWidth: 0,
   } as React.CSSProperties,
 
   sessionName: {
     margin: 0,
     fontSize: TYPOGRAPHY.textSm,
-    fontWeight: TYPOGRAPHY.weight500,
+    fontWeight: TYPOGRAPHY.weight600,
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   } as React.CSSProperties,
 
   sessionMeta: {
     margin: 0,
     fontSize: TYPOGRAPHY.textXs,
-    opacity: 0.7,
-    marginTop: "2px",
+    opacity: 0.9,
+    marginTop: "4px",
+  } as React.CSSProperties,
+
+  selectedIndicator: {
+    width: "10px",
+    height: "10px",
+    backgroundColor: COLORS.unreadDot,
+    border: `2px solid ${COLORS.borderDefault}`,
+    flexShrink: 0,
+    marginLeft: SPACING.sm,
   } as React.CSSProperties,
 
   loadingPlaceholder: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100px",
+    height: "120px",
   } as React.CSSProperties,
 
   loadingText: {
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     fontSize: TYPOGRAPHY.textSm,
     margin: 0,
-    animation: "pulse 1.5s ease-in-out infinite",
+    animation: "pixelPulse 1.2s steps(2, end) infinite",
   } as React.CSSProperties,
 
   emptyState: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100px",
+    height: "120px",
+    border: `3px dashed ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   emptyText: {
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     fontSize: TYPOGRAPHY.textSm,
     margin: 0,
   } as React.CSSProperties,
@@ -366,19 +365,20 @@ const styles = {
   iconButton: {
     width: "48px",
     height: "48px",
-    borderRadius: "8px",
-    border: "none",
+    border: `3px solid ${COLORS.borderDefault}`,
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    transition: `all ${TRANSITIONS.fast}`,
-    fontSize: "20px",
+    transition: `transform ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
+    fontSize: TYPOGRAPHY.textSm,
+    color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   iconEmoji: {
     display: "block",
-    fontSize: "24px",
+    fontSize: TYPOGRAPHY.textSm,
+    fontWeight: TYPOGRAPHY.weight600,
   } as React.CSSProperties,
 
   stripPlaceholder: {
@@ -387,8 +387,10 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
-    opacity: 0.6,
+    fontSize: TYPOGRAPHY.textSm,
+    color: COLORS.textSecondary,
+    border: `3px dashed ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgSurface,
   } as React.CSSProperties,
 
   searchContainer: {
@@ -398,26 +400,30 @@ const styles = {
 
   searchInput: {
     width: "100%",
-    padding: SPACING.md,
-    borderRadius: "6px",
-    border: `1px solid ${COLORS.borderDefault}`,
-    fontSize: TYPOGRAPHY.textSm,
+    padding: `${SPACING.md} ${SPACING.xl} ${SPACING.md} ${SPACING.md}`,
+    border: `3px solid ${COLORS.borderDefault}`,
+    fontSize: TYPOGRAPHY.textXs,
     fontFamily: TYPOGRAPHY.fontFamily,
-    backgroundColor: COLORS.bgPrimary,
+    backgroundColor: COLORS.bgSurface,
     color: COLORS.textPrimary,
-    transition: `all ${TRANSITIONS.fast}`,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   clearButton: {
     position: "absolute" as const,
-    right: `calc(${SPACING.md} + ${SPACING.md})`,
-    top: `calc(${SPACING.md} + ${SPACING.md})`,
-    background: "none",
-    border: "none",
-    color: COLORS.textTertiary,
+    right: `calc(${SPACING.md} + ${SPACING.sm})`,
+    top: `calc(${SPACING.md} + ${SPACING.sm})`,
+    width: "24px",
+    height: "24px",
+    backgroundColor: COLORS.bgPrimary,
+    border: `2px solid ${COLORS.borderDefault}`,
+    color: COLORS.textPrimary,
     cursor: "pointer",
-    fontSize: TYPOGRAPHY.textSm,
-    padding: SPACING.sm,
+    fontSize: TYPOGRAPHY.textXs,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   sessionGroup: {
@@ -427,11 +433,9 @@ const styles = {
   groupTitle: {
     fontSize: TYPOGRAPHY.textXs,
     fontWeight: TYPOGRAPHY.weight600,
-    color: COLORS.textTertiary,
-    textTransform: "uppercase" as const,
+    color: COLORS.textSecondary,
     margin: 0,
     marginBottom: SPACING.md,
-    letterSpacing: "0.5px",
     display: "flex",
     alignItems: "center",
     gap: SPACING.sm,
@@ -439,10 +443,10 @@ const styles = {
 
   groupCount: {
     fontSize: TYPOGRAPHY.textXs,
-    backgroundColor: COLORS.bgPrimary,
-    color: COLORS.accentPrimary,
+    backgroundColor: COLORS.bgSurface,
+    color: COLORS.textPrimary,
     padding: `${SPACING.xs} ${SPACING.sm}`,
-    borderRadius: SPACING.xs,
-    fontWeight: TYPOGRAPHY.weight600,
+    border: `2px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 } as const;

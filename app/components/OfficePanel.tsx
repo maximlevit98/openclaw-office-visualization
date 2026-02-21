@@ -2,7 +2,15 @@
 
 import React from "react";
 import { Agent } from "@/lib/types";
-import { COLORS, TYPOGRAPHY, SPACING, TRANSITIONS, RADIUS, SHADOWS, getStatusColor, getAvatarColor } from "@/lib/design-tokens";
+import {
+  COLORS,
+  TYPOGRAPHY,
+  SPACING,
+  TRANSITIONS,
+  SHADOWS,
+  getStatusColor,
+  getAvatarColor,
+} from "@/lib/design-tokens";
 
 interface OfficePanelProps {
   agents: Agent[];
@@ -10,40 +18,32 @@ interface OfficePanelProps {
   onAgentClick?: (agentId: string) => void;
 }
 
-export function OfficePanel({
-  agents,
-  loading,
-  onAgentClick,
-}: OfficePanelProps) {
-  const onlineAgents = agents.filter((a) =>
-    ["online", "busy"].includes(a.status || "")
-  );
+export function OfficePanel({ agents, loading, onAgentClick }: OfficePanelProps) {
+  const onlineAgents = agents.filter((a) => ["online", "busy", "active"].includes(a.status || ""));
   const idleAgents = agents.filter((a) => a.status === "idle");
   const offlineAgents = agents.filter((a) => a.status === "offline");
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>Agents</h2>
+        <h2 style={styles.title}>AGENT FLOOR</h2>
         <span style={styles.count}>{agents.length}</span>
       </div>
 
       {loading ? (
         <div style={styles.loadingState}>
-          <p style={styles.loadingText}>Loading agents...</p>
+          <p style={styles.loadingText}>SPAWNING AGENTS...</p>
         </div>
       ) : agents.length === 0 ? (
         <div style={styles.emptyState}>
-          <p style={styles.emptyIcon}>🤖</p>
-          <p style={styles.emptyText}>No agents online</p>
+          <p style={styles.emptyIcon}>NO UNITS ONLINE</p>
         </div>
       ) : (
         <div style={styles.agentsContainer}>
-          {/* Online Agents */}
           {onlineAgents.length > 0 && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>
-                Online <span style={styles.badge}>{onlineAgents.length}</span>
+                ONLINE <span style={styles.badge}>{onlineAgents.length}</span>
               </h3>
               {onlineAgents.map((agent) => (
                 <AgentCard
@@ -55,11 +55,10 @@ export function OfficePanel({
             </div>
           )}
 
-          {/* Idle Agents */}
           {idleAgents.length > 0 && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>
-                Idle <span style={styles.badge}>{idleAgents.length}</span>
+                IDLE <span style={styles.badge}>{idleAgents.length}</span>
               </h3>
               {idleAgents.map((agent) => (
                 <AgentCard
@@ -71,12 +70,10 @@ export function OfficePanel({
             </div>
           )}
 
-          {/* Offline Agents */}
           {offlineAgents.length > 0 && (
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>
-                Offline{" "}
-                <span style={styles.badge}>{offlineAgents.length}</span>
+                OFFLINE <span style={styles.badge}>{offlineAgents.length}</span>
               </h3>
               {offlineAgents.map((agent) => (
                 <AgentCard
@@ -120,7 +117,7 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
           style={{
             ...styles.avatar,
             backgroundColor: avatarColor,
-            color: COLORS.bgPrimary,
+            color: COLORS.textPrimary,
           }}
         >
           {initials}
@@ -134,15 +131,11 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
                 backgroundColor: statusColor,
               }}
             />
-            <span style={styles.statusText}>{agent.status || "unknown"}</span>
+            <span style={styles.statusText}>{(agent.status || "unknown").toUpperCase()}</span>
           </div>
         </div>
       </div>
-      {agent.lastSeen && (
-        <p style={styles.lastSeen}>
-          {formatLastSeen(agent.lastSeen)}
-        </p>
-      )}
+      {agent.lastSeen && <p style={styles.lastSeen}>{formatLastSeen(agent.lastSeen)}</p>}
     </button>
   );
 }
@@ -153,14 +146,14 @@ function formatLastSeen(timestamp: string): string {
   const diff = now.getTime() - date.getTime();
 
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return "NOW";
+  if (minutes < 60) return `${minutes}M AGO`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}H AGO`;
 
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days}D AGO`;
 }
 
 const styles = {
@@ -168,13 +161,9 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     height: "100vh",
-    backgroundColor: COLORS.bgSurface,
-    borderLeft: `1px solid ${COLORS.borderDefault}`,
-    "@media (max-width: 1023px)": {
-      height: "auto",
-      borderLeft: "none",
-      borderBottom: `1px solid ${COLORS.borderDefault}`,
-    },
+    backgroundColor: COLORS.bgSidebar,
+    borderLeft: `3px solid ${COLORS.borderDefault}`,
+    boxShadow: SHADOWS.panel,
   } as React.CSSProperties,
 
   header: {
@@ -182,24 +171,26 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: SPACING.lg,
-    borderBottom: `1px solid ${COLORS.borderDefault}`,
+    borderBottom: `3px solid ${COLORS.borderDefault}`,
     gap: SPACING.md,
+    backgroundColor: COLORS.bgSurface,
   } as React.CSSProperties,
 
   title: {
-    fontSize: TYPOGRAPHY.textLg,
+    fontSize: TYPOGRAPHY.textSm,
     fontWeight: TYPOGRAPHY.weight600,
     margin: 0,
     color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   count: {
-    fontSize: TYPOGRAPHY.textSm,
-    backgroundColor: COLORS.bgPrimary,
-    color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.textXs,
+    backgroundColor: COLORS.accentPrimary,
+    color: COLORS.textPrimary,
     padding: `${SPACING.xs} ${SPACING.sm}`,
-    borderRadius: RADIUS.full,
-    fontWeight: TYPOGRAPHY.weight500,
+    border: `2px solid ${COLORS.borderDefault}`,
+    fontWeight: TYPOGRAPHY.weight600,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   agentsContainer: {
@@ -219,7 +210,7 @@ const styles = {
   } as React.CSSProperties,
 
   sectionTitle: {
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textXs,
     fontWeight: TYPOGRAPHY.weight600,
     color: COLORS.textSecondary,
     margin: 0,
@@ -227,16 +218,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: SPACING.sm,
-    textTransform: "capitalize" as const,
   } as React.CSSProperties,
 
   badge: {
     fontSize: TYPOGRAPHY.textXs,
-    backgroundColor: COLORS.bgPrimary,
-    color: COLORS.accentPrimary,
+    backgroundColor: COLORS.bgSurface,
+    color: COLORS.textPrimary,
     padding: `${SPACING.xs} ${SPACING.sm}`,
-    borderRadius: RADIUS.full,
+    border: `2px solid ${COLORS.borderDefault}`,
     fontWeight: TYPOGRAPHY.weight600,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   agentCard: {
@@ -244,14 +235,16 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: SPACING.md,
-    backgroundColor: COLORS.bgPrimary,
-    border: `1px solid ${COLORS.borderSubtle}`,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.bgSurface,
+    border: `3px solid ${COLORS.borderDefault}`,
     cursor: "pointer",
-    transition: `all ${TRANSITIONS.normal}`,
+    transition: `transform ${TRANSITIONS.normal}, box-shadow ${TRANSITIONS.normal}`,
     fontSize: TYPOGRAPHY.textSm,
     fontFamily: TYPOGRAPHY.fontFamily,
     gap: SPACING.md,
+    boxShadow: SHADOWS.card,
+    color: COLORS.textPrimary,
+    textAlign: "left" as const,
   } as React.CSSProperties,
 
   agentCardContent: {
@@ -259,18 +252,20 @@ const styles = {
     alignItems: "center",
     gap: SPACING.md,
     flex: 1,
+    minWidth: 0,
   } as React.CSSProperties,
 
   avatar: {
     width: "40px",
     height: "40px",
-    borderRadius: RADIUS.md,
+    border: `2px solid ${COLORS.borderDefault}`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: TYPOGRAPHY.weight600,
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textXs,
     flexShrink: 0,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   agentInfo: {
@@ -281,7 +276,7 @@ const styles = {
   agentName: {
     margin: 0,
     fontSize: TYPOGRAPHY.textSm,
-    fontWeight: TYPOGRAPHY.weight500,
+    fontWeight: TYPOGRAPHY.weight600,
     color: COLORS.textPrimary,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -292,26 +287,25 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "6px",
-    marginTop: "4px",
+    marginTop: "6px",
   } as React.CSSProperties,
 
   statusDot: {
-    width: "6px",
-    height: "6px",
-    borderRadius: RADIUS.full,
+    width: "9px",
+    height: "9px",
+    border: `1px solid ${COLORS.borderDefault}`,
     flexShrink: 0,
   } as React.CSSProperties,
 
   statusText: {
     fontSize: TYPOGRAPHY.textXs,
-    color: COLORS.textTertiary,
-    textTransform: "capitalize" as const,
+    color: COLORS.textSecondary,
   } as React.CSSProperties,
 
   lastSeen: {
     margin: 0,
     fontSize: TYPOGRAPHY.textXs,
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     whiteSpace: "nowrap" as const,
     flexShrink: 0,
   } as React.CSSProperties,
@@ -322,18 +316,16 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
+    border: `3px dashed ${COLORS.borderSubtle}`,
+    margin: SPACING.lg,
+    backgroundColor: COLORS.bgSurface,
+    boxShadow: SHADOWS.card,
   } as React.CSSProperties,
 
   emptyIcon: {
-    fontSize: "48px",
-    margin: 0,
-  } as React.CSSProperties,
-
-  emptyText: {
     fontSize: TYPOGRAPHY.textSm,
-    color: COLORS.textTertiary,
     margin: 0,
-    marginTop: SPACING.lg,
+    color: COLORS.textSecondary,
   } as React.CSSProperties,
 
   loadingState: {
@@ -344,9 +336,9 @@ const styles = {
   } as React.CSSProperties,
 
   loadingText: {
-    color: COLORS.textTertiary,
+    color: COLORS.textSecondary,
     fontSize: TYPOGRAPHY.textSm,
     margin: 0,
-    animation: "pulse 1.5s ease-in-out infinite",
+    animation: "pixelPulse 1.3s steps(2, end) infinite",
   } as React.CSSProperties,
 } as const;

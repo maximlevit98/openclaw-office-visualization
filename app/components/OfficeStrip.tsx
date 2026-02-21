@@ -2,7 +2,15 @@
 
 import React from "react";
 import { Agent } from "@/lib/types";
-import { COLORS, TYPOGRAPHY, SPACING, TRANSITIONS, RADIUS, getStatusColor, getAvatarColor } from "@/lib/design-tokens";
+import {
+  COLORS,
+  TYPOGRAPHY,
+  SPACING,
+  TRANSITIONS,
+  SHADOWS,
+  getStatusColor,
+  getAvatarColor,
+} from "@/lib/design-tokens";
 
 interface OfficeStripProps {
   agents: Agent[];
@@ -11,14 +19,9 @@ interface OfficeStripProps {
 }
 
 /**
- * Horizontal office strip for tablet/responsive layouts
- * Shows agents as a horizontal scrollable list of compact cards
+ * Compact strip for tablet layouts.
  */
-export function OfficeStrip({
-  agents,
-  loading,
-  onAgentClick,
-}: OfficeStripProps) {
+export function OfficeStrip({ agents, loading, onAgentClick }: OfficeStripProps) {
   if (loading) {
     return (
       <div style={styles.container}>
@@ -29,15 +32,13 @@ export function OfficeStrip({
     );
   }
 
-  const onlineAgents = agents.filter((a) =>
-    ["online", "busy"].includes(a.status || "")
-  );
+  const onlineAgents = agents.filter((a) => ["online", "busy", "active"].includes(a.status || ""));
 
   return (
     <div style={styles.container}>
-      <span style={styles.label}>Agents:</span>
+      <span style={styles.label}>UNITS:</span>
       {onlineAgents.length === 0 ? (
-        <span style={styles.noAgents}>No agents online</span>
+        <span style={styles.noAgents}>NONE ONLINE</span>
       ) : (
         onlineAgents.map((agent) => (
           <AgentStripItem
@@ -68,38 +69,18 @@ function AgentStripItem({ agent, onClick }: AgentStripItemProps) {
     .substring(0, 2);
 
   return (
-    <button
-      style={styles.agentItem}
-      onClick={onClick}
-      title={agent.name || agent.id}
-    >
+    <button style={styles.agentItem} onClick={onClick} title={agent.name || agent.id}>
       <div
         style={{
           ...styles.avatar,
           backgroundColor: avatarColor,
         }}
       >
-        <span
-          style={{
-            position: "relative",
-            zIndex: 1,
-            color: COLORS.bgPrimary,
-            fontSize: TYPOGRAPHY.textXs,
-            fontWeight: TYPOGRAPHY.weight600,
-          }}
-        >
-          {initials}
-        </span>
+        <span style={styles.avatarLabel}>{initials}</span>
         <div
           style={{
-            position: "absolute",
-            bottom: "-2px",
-            right: "-2px",
-            width: "8px",
-            height: "8px",
-            borderRadius: RADIUS.full,
+            ...styles.statusDot,
             backgroundColor: statusColor,
-            border: `2px solid ${COLORS.bgSurface}`,
           }}
         />
       </div>
@@ -115,21 +96,21 @@ const styles = {
     gap: SPACING.md,
     padding: `${SPACING.md} ${SPACING.lg}`,
     backgroundColor: COLORS.bgSurface,
-    borderBottom: `1px solid ${COLORS.borderDefault}`,
+    borderBottom: `3px solid ${COLORS.borderDefault}`,
     overflow: "hidden",
     overflowX: "auto" as const,
     whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 
   label: {
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textXs,
     fontWeight: TYPOGRAPHY.weight600,
     color: COLORS.textSecondary,
     flexShrink: 0,
   } as React.CSSProperties,
 
   noAgents: {
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textXs,
     color: COLORS.textTertiary,
   } as React.CSSProperties,
 
@@ -139,41 +120,59 @@ const styles = {
     gap: SPACING.sm,
     padding: `${SPACING.sm} ${SPACING.md}`,
     backgroundColor: COLORS.bgPrimary,
-    border: `1px solid ${COLORS.borderSubtle}`,
-    borderRadius: RADIUS.md,
+    border: `3px solid ${COLORS.borderDefault}`,
     cursor: "pointer",
-    transition: `all ${TRANSITIONS.fast}`,
-    fontSize: TYPOGRAPHY.textSm,
+    transition: `transform ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
+    fontSize: TYPOGRAPHY.textXs,
     fontFamily: TYPOGRAPHY.fontFamily,
     whiteSpace: "nowrap" as const,
     flexShrink: 0,
+    boxShadow: SHADOWS.card,
+    color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   avatar: {
-    position: "relative",
+    position: "relative" as const,
     width: "28px",
     height: "28px",
-    borderRadius: RADIUS.sm,
+    border: `2px solid ${COLORS.borderDefault}`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontWeight: TYPOGRAPHY.weight600,
     fontSize: TYPOGRAPHY.textXs,
     flexShrink: 0,
-    color: COLORS.bgPrimary,
+    color: COLORS.textPrimary,
+  } as React.CSSProperties,
+
+  avatarLabel: {
+    position: "relative" as const,
+    zIndex: 1,
+    color: COLORS.textPrimary,
+    fontSize: "9px",
+    fontWeight: TYPOGRAPHY.weight600,
+  } as React.CSSProperties,
+
+  statusDot: {
+    position: "absolute" as const,
+    bottom: "-4px",
+    right: "-4px",
+    width: "10px",
+    height: "10px",
+    border: `2px solid ${COLORS.borderDefault}`,
   } as React.CSSProperties,
 
   agentLabel: {
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: TYPOGRAPHY.textXs,
     color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   skeleton: {
     width: "120px",
-    height: "36px",
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.borderSubtle,
-    animation: "pulse 1.5s ease-in-out infinite",
+    height: "34px",
+    border: `3px solid ${COLORS.borderSubtle}`,
+    backgroundColor: COLORS.bgPrimary,
+    animation: "pixelPulse 1.4s steps(2, end) infinite",
     flexShrink: 0,
   } as React.CSSProperties,
 } as const;

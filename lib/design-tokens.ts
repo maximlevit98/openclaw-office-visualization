@@ -1,43 +1,44 @@
 /**
- * Design Tokens — "The Bullpen"
- * Approved palette from handoffs/designer/visual-direction.md
- * Cycle 3 — Phase 1 Implementation
+ * Design Tokens — "8-Bit Office"
+ * Hard edges, chunky shadows, and retro arcade palette.
  */
 
 export const COLORS = {
-  // Base (Warm Neutrals)
-  bgPrimary: "#FAF8F5",
-  bgSurface: "#FFFFFF",
-  bgSidebar: "#F3F0EB",
-  borderDefault: "#E5E0D8",
-  borderSubtle: "#EDE9E3",
-  textPrimary: "#1A1816",
-  textSecondary: "#6B635A",
-  textTertiary: "#9E958A",
+  // Base
+  bgPrimary: "#d7f7b0",
+  bgSurface: "#f6f4cf",
+  bgSidebar: "#cde56f",
+  borderDefault: "#1a2238",
+  borderSubtle: "#34436e",
+  textPrimary: "#141b2d",
+  textSecondary: "#2d3a63",
+  textTertiary: "#4f5c86",
 
-  // Status Palette
-  statusIdle: "#8B9E7C",
-  statusThinking: "#D4A843",
-  statusTool: "#5B8ABF",
-  statusError: "#C45D4E",
-  statusOffline: "#B5AFA6",
+  // Status
+  statusIdle: "#5ad26a",
+  statusThinking: "#ffd166",
+  statusTool: "#1ec8ff",
+  statusError: "#ff3f71",
+  statusOffline: "#8a95b0",
+  statusOnline: "#23f0c7",
+  statusBusy: "#ff8d3b",
 
   // Accent
-  accentPrimary: "#C45A2C",
-  accentHover: "#A8492A",
-  unreadDot: "#C45A2C",
+  accentPrimary: "#ff5f2e",
+  accentHover: "#ff8448",
+  unreadDot: "#ff2056",
 };
 
 export const TYPOGRAPHY = {
-  fontFamily: "'Inter', system-ui, sans-serif",
-  fontMono: "'JetBrains Mono', 'Monaco', monospace",
+  fontFamily: "'Press Start 2P', 'VT323', 'Courier New', monospace",
+  fontMono: "'VT323', 'Courier New', monospace",
 
   // Size / line-height
-  textXs: "12px / 1.4",
-  textSm: "14px / 1.5",
-  textBase: "16px / 1.5",
-  textLg: "18px / 1.4",
-  textXl: "24px / 1.3",
+  textXs: "10px",
+  textSm: "12px",
+  textBase: "14px",
+  textLg: "16px",
+  textXl: "20px",
 
   // Weights
   weight400: 400,
@@ -57,21 +58,21 @@ export const SPACING = {
 };
 
 export const RADIUS = {
-  sm: "6px",
-  md: "10px",
-  lg: "16px",
+  sm: "0px",
+  md: "2px",
+  lg: "4px",
   full: "9999px",
 };
 
 export const SHADOWS = {
-  card: "0 1px 3px rgba(26, 24, 22, 0.06), 0 1px 2px rgba(26, 24, 22, 0.04)",
-  panel: "0 4px 12px rgba(26, 24, 22, 0.08)",
-  hover: "0 4px 16px rgba(26, 24, 22, 0.12)",
+  card: "3px 3px 0 0 rgba(20, 27, 45, 0.42)",
+  panel: "5px 5px 0 0 rgba(20, 27, 45, 0.52)",
+  hover: "7px 7px 0 0 rgba(20, 27, 45, 0.62)",
 };
 
 export const TRANSITIONS = {
-  fast: "150ms ease-out",
-  normal: "200ms ease-in-out",
+  fast: "120ms steps(2, end)",
+  normal: "180ms steps(2, end)",
 };
 
 export const BREAKPOINTS = {
@@ -85,6 +86,11 @@ export const BREAKPOINTS = {
 export function getStatusColor(status?: string): string {
   if (!status) return COLORS.textSecondary;
   switch (status.toLowerCase()) {
+    case "online":
+    case "active":
+      return COLORS.statusOnline;
+    case "busy":
+      return COLORS.statusBusy;
     case "idle":
       return COLORS.statusIdle;
     case "thinking":
@@ -104,17 +110,17 @@ export function getStatusColor(status?: string): string {
  * Helper: Get fallback avatar color (6-hue warm palette)
  */
 export const avatarFallbackColors = [
-  "#8B9E7C", // sage
-  "#D4A843", // amber
-  "#5B8ABF", // blue
-  "#C45D4E", // red
-  "#B5AFA6", // gray
-  "#C45A2C", // terracotta
+  "#23f0c7", // aqua
+  "#ff5f2e", // orange
+  "#ffd166", // yellow
+  "#7b6cff", // violet
+  "#3f88ff", // blue
+  "#ff3f71", // pink-red
 ];
 
 export function getAvatarColor(name?: string): string {
   if (!name) return avatarFallbackColors[0];
-  const hash = name.charCodeAt(0) + name.charCodeAt(name.length - 1);
+  const hash = Array.from(name).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   return avatarFallbackColors[hash % avatarFallbackColors.length];
 }
 
@@ -124,6 +130,11 @@ export function getAvatarColor(name?: string): string {
 export function getStatusLabel(status?: string): string {
   if (!status) return "Unknown";
   switch (status.toLowerCase()) {
+    case "online":
+    case "active":
+      return "Online";
+    case "busy":
+      return "Busy";
     case "idle":
       return "Idle";
     case "thinking":
