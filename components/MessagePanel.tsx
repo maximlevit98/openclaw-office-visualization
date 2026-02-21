@@ -147,32 +147,48 @@ export function MessagePanel({
             <p style={styles.emptySubtext}>Send a message to get started</p>
           </div>
         ) : (
-          messages.map((msg, idx) => (
-            <div
-              key={idx}
-              style={{
-                ...styles.message,
-                ...(msg.role === "user"
-                  ? styles.messageUser
-                  : msg.role === "system"
-                    ? styles.messageSystem
-                    : styles.messageAssistant),
-              }}
-            >
-              <div style={styles.messageMeta}>
-                <span style={styles.messageName}>{msg.role}</span>
-                {msg.timestamp && (
-                  <span style={styles.messageTime}>
-                    {formatTimestamp(msg.timestamp)}
-                  </span>
+          messages.map((msg, idx) => {
+            const prevMsg = idx > 0 ? messages[idx - 1] : null;
+            const sameSender = prevMsg && prevMsg.role === msg.role;
+            const isUserMsg = msg.role === "user";
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  ...styles.message,
+                  ...(msg.role === "user"
+                    ? styles.messageUser
+                    : msg.role === "system"
+                      ? styles.messageSystem
+                      : styles.messageAssistant),
+                  ...(sameSender ? styles.messageConsecutive : styles.messageGroupStart),
+                }}
+              >
+                {!sameSender && !isUserMsg && (
+                  <div style={styles.messageMeta}>
+                    <span style={styles.messageName}>{msg.role}</span>
+                    {msg.timestamp && (
+                      <span style={styles.messageTime}>
+                        {formatTimestamp(msg.timestamp)}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {!sameSender && isUserMsg && msg.timestamp && (
+                  <div style={styles.messageMetaRight}>
+                    <span style={styles.messageTime}>
+                      {formatTimestamp(msg.timestamp)}
+                    </span>
+                  </div>
+                )}
+                <p style={styles.messageContent}>{msg.content}</p>
+                {msg.toolName && (
+                  <span style={styles.toolTag}>{msg.toolName}</span>
                 )}
               </div>
-              <p style={styles.messageContent}>{msg.content}</p>
-              {msg.toolName && (
-                <span style={styles.toolTag}>{msg.toolName}</span>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
         {isLoading && (
           <div style={styles.message}>
@@ -273,9 +289,9 @@ const styles = {
     border: `1px solid ${COLORS.borderDefault}`,
     borderRadius: RADIUS.sm,
     cursor: "pointer",
-    fontSize: "16px",
-    color: COLORS.textPrimary,
-    transition: TRANSITIONS.fast,
+    fontSize: "14px",
+    color: COLORS.textSecondary,
+    transition: `all ${TRANSITIONS.fast}`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -284,6 +300,7 @@ const styles = {
   buttonDisabled: {
     opacity: 0.5,
     cursor: "not-allowed",
+    color: COLORS.textTertiary,
   } as React.CSSProperties,
 
   title: {
@@ -309,12 +326,14 @@ const styles = {
     width: "10px",
     height: "10px",
     borderRadius: RADIUS.full,
+    flexShrink: 0,
   } as React.CSSProperties,
 
   statusLabel: {
     fontSize: "12px",
     fontWeight: "500",
     color: COLORS.textSecondary,
+    textTransform: "capitalize" as const,
   } as React.CSSProperties,
 
   messagesList: {
@@ -335,11 +354,12 @@ const styles = {
 
   messageUser: {
     alignSelf: "flex-end" as const,
-    maxWidth: "60%",
+    maxWidth: "65%",
     backgroundColor: `rgba(196, 90, 44, 0.08)`,
-    padding: `${SPACING.sm} ${SPACING.md}`,
+    padding: `${SPACING.md} ${SPACING.lg}`,
     borderRadius: RADIUS.md,
     color: COLORS.textPrimary,
+    borderLeft: `3px solid ${COLORS.accentPrimary}`,
   } as React.CSSProperties,
 
   messageAssistant: {
@@ -349,15 +369,34 @@ const styles = {
   } as React.CSSProperties,
 
   messageSystem: {
-    alignSelf: "flex-start" as const,
-    maxWidth: "680px",
-    color: COLORS.textSecondary,
+    alignSelf: "center" as const,
+    maxWidth: "500px",
+    color: COLORS.textTertiary,
     fontStyle: "italic" as const,
+    fontSize: "13px",
+    padding: `${SPACING.sm} ${SPACING.md}`,
+    backgroundColor: `rgba(155, 149, 138, 0.05)`,
+    borderRadius: RADIUS.sm,
+  } as React.CSSProperties,
+
+  messageGroupStart: {
+    marginTop: SPACING.lg,
+  } as React.CSSProperties,
+
+  messageConsecutive: {
+    marginTop: "2px",
   } as React.CSSProperties,
 
   messageMeta: {
     display: "flex",
     gap: SPACING.md,
+    marginBottom: SPACING.sm,
+    alignItems: "center",
+  } as React.CSSProperties,
+
+  messageMetaRight: {
+    display: "flex",
+    justifyContent: "flex-end",
     marginBottom: SPACING.sm,
   } as React.CSSProperties,
 
@@ -367,38 +406,47 @@ const styles = {
     fontWeight: "600",
     textTransform: "uppercase" as const,
     color: COLORS.textSecondary,
+    letterSpacing: "0.02em",
   } as React.CSSProperties,
 
   messageTime: {
     fontSize: "12px",
     color: COLORS.textTertiary,
     marginLeft: "auto",
+    whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 
   messageContent: {
     margin: 0,
     wordWrap: "break-word" as const,
     whiteSpace: "pre-wrap" as const,
+    lineHeight: 1.6,
+    wordBreak: "break-word" as const,
+    overflowWrap: "break-word" as const,
   } as React.CSSProperties,
 
   toolTag: {
-    display: "inline-block",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: SPACING.sm,
     marginTop: SPACING.md,
-    padding: `${SPACING.sm} ${SPACING.md}`,
-    backgroundColor: COLORS.bgSidebar,
-    borderRadius: RADIUS.sm,
+    paddingTop: SPACING.md,
+    borderTop: `1px solid ${COLORS.borderSubtle}`,
     fontSize: "12px",
     fontWeight: "500",
     color: COLORS.textSecondary,
     fontFamily: TYPOGRAPHY.fontMono,
     maxWidth: "100%",
-    overflow: "auto",
+    overflow: "hidden" as const,
+    textOverflow: "ellipsis" as const,
   } as React.CSSProperties,
 
   typingDots: {
-    fontSize: "18px",
-    letterSpacing: "2px",
-    animation: "pulse 1.5s infinite",
+    fontSize: "14px",
+    letterSpacing: "3px",
+    animation: "pulse 1.4s infinite",
+    color: COLORS.textSecondary,
+    fontWeight: "500",
   } as React.CSSProperties,
 
   newMessagesPill: {
@@ -425,18 +473,23 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     color: COLORS.textTertiary,
+    padding: SPACING.xxxl,
   } as React.CSSProperties,
 
   emptyText: {
     margin: 0,
-    fontSize: "16px",
+    fontSize: "32px",
     fontWeight: "500",
+    color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   emptySubtext: {
-    margin: `${SPACING.md} 0 0 0`,
+    margin: `${SPACING.lg} 0 0 0`,
     fontSize: "14px",
-    color: COLORS.textSecondary,
+    color: COLORS.textTertiary,
+    textAlign: "center" as const,
+    maxWidth: "200px",
+    lineHeight: 1.5,
   } as React.CSSProperties,
 
   inputContainer: {
