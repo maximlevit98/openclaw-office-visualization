@@ -114,12 +114,25 @@ export default function RootLayout({
             }
           }
 
+          @keyframes slideInLeft {
+            from {
+              transform: translateX(-100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+
           /* Desktop: 3-column layout (280px sidebar | 1fr chat | 300px office) */
           @media (min-width: 1024px) {
             [data-layout="desktop"] {
               display: grid;
               grid-template-columns: 280px 1fr 300px;
+              grid-template-rows: 1fr;
               gap: 0;
+              height: 100vh;
             }
           }
 
@@ -128,15 +141,20 @@ export default function RootLayout({
             [data-layout="tablet"] {
               display: grid;
               grid-template-columns: 64px 1fr;
+              grid-template-rows: auto 1fr;
               gap: 0;
+              height: 100vh;
             }
 
             [data-office-strip] {
               display: flex;
               gap: var(--space-sm);
               overflow-x: auto;
-              padding: var(--space-lg);
+              padding: var(--space-md) var(--space-lg);
               border-bottom: 1px solid var(--border-default);
+              align-items: center;
+              grid-column: 2;
+              grid-row: 1;
             }
           }
 
@@ -167,15 +185,27 @@ export default function RootLayout({
             background: var(--text-tertiary);
           }
 
-          /* Form focus styling */
+          /* Focus-visible for accessibility */
+          input:focus-visible,
+          textarea:focus-visible {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(196, 90, 44, 0.15);
+          }
+
+          button:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+          }
+
+          /* Fallback for focus (for older browsers) */
           input:focus,
           textarea:focus {
             outline: none;
-            border-color: var(--accent-primary) !important;
-            box-shadow: 0 0 0 2px rgba(196, 90, 44, 0.1) !important;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(196, 90, 44, 0.15);
           }
 
-          /* Button focus */
           button:focus {
             outline: 2px solid var(--accent-primary);
             outline-offset: 2px;

@@ -1,6 +1,7 @@
 "use client";
 
 import { Session } from "@/lib/types";
+import { COLORS, SPACING, RADIUS, TRANSITIONS } from "@/lib/design-tokens";
 
 interface SessionListProps {
   sessions: Session[];
@@ -57,42 +58,50 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
-    padding: "0.75rem",
-    marginBottom: "0.5rem",
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     backgroundColor: "transparent",
-    border: "1px solid #374151",
-    borderRadius: "0.375rem",
-    color: "#f3f4f6",
+    border: `1px solid transparent`,
+    borderLeft: `3px solid transparent`,
+    borderRadius: RADIUS.sm,
+    color: COLORS.textPrimary,
     cursor: "pointer",
-    fontSize: "0.875rem",
-    transition: "all 0.2s",
+    fontSize: "14px",
+    transition: `all ${TRANSITIONS.fast}`,
     fontFamily: "inherit",
   } as React.CSSProperties,
 
   itemActive: {
-    backgroundColor: "#374151",
-    borderColor: "#60a5fa",
-    color: "#fff",
+    backgroundColor: COLORS.bgSurface,
+    borderLeftColor: COLORS.accentPrimary,
+    borderLeftWidth: "3px",
+    color: COLORS.textPrimary,
+    fontWeight: 500,
   } as React.CSSProperties,
 
   name: {
     fontWeight: 500,
+    flex: 1,
   } as React.CSSProperties,
 
   meta: {
-    fontSize: "0.75rem",
-    color: "#9ca3af",
+    fontSize: "12px",
+    color: COLORS.textTertiary,
+    marginLeft: SPACING.md,
+    whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 
   loadingText: {
-    fontSize: "0.875rem",
-    color: "#9ca3af",
+    fontSize: "14px",
+    color: COLORS.textTertiary,
     margin: 0,
+    padding: `${SPACING.md} ${SPACING.lg}`,
   } as React.CSSProperties,
 
   emptyText: {
-    fontSize: "0.875rem",
-    color: "#9ca3af",
+    fontSize: "14px",
+    color: COLORS.textTertiary,
     margin: 0,
+    padding: `${SPACING.md} ${SPACING.lg}`,
   } as React.CSSProperties,
 };

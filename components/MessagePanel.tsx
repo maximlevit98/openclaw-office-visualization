@@ -3,13 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Message, Session } from "@/lib/types";
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, TRANSITIONS } from "@/lib/design-tokens";
+import { formatTimestamp } from "@/lib/utils";
 
 interface MessagePanelProps {
   currentSession: Session | undefined;
   messages: Message[];
   selectedSession: string | null;
   onSendMessage: (content: string) => Promise<void>;
+  onRefresh?: () => Promise<void>;
   isSending?: boolean;
+  isRefreshing?: boolean;
 }
 
 export function MessagePanel({
@@ -17,13 +20,29 @@ export function MessagePanel({
   messages,
   selectedSession,
   onSendMessage,
+  onRefresh,
   isSending = false,
+  isRefreshing = false,
 }: MessagePanelProps) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [scrolledUp, setScrolledUp] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleRefresh = async () => {
+    if (!onRefresh || refreshing) return;
+    setRefreshing(true);
+    try {
+      await onRefresh();
+      setScrolledUp(false); // Auto-scroll after refresh
+    } catch (err) {
+      console.error("Failed to refresh:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Auto-scroll to bottom when messages change (unless user scrolled up)
   useEffect(() => {
@@ -85,20 +104,35 @@ export function MessagePanel({
   return (
     <section style={styles.panel}>
       <div style={styles.header}>
-        <div>
+        <div style={styles.headerLeft}>
           <h2 style={styles.title}>{currentSession?.label || "Chat"}</h2>
           <p style={styles.role}>Session</p>
         </div>
-        <div style={styles.statusBadge}>
-          <div
-            style={{
-              ...styles.statusDot,
-              backgroundColor: selectedSession ? COLORS.statusIdle : COLORS.statusOffline,
-            }}
-          />
-          <span style={styles.statusLabel}>
-            {selectedSession ? "Active" : "Idle"}
-          </span>
+        <div style={styles.headerRight}>
+          {onRefresh && (
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing || isRefreshing}
+              style={{
+                ...styles.headerButton,
+                ...(refreshing || isRefreshing ? styles.buttonDisabled : {}),
+              }}
+              title="Refresh messages"
+            >
+              ↻
+            </button>
+          )}
+          <div style={styles.statusBadge}>
+            <div
+              style={{
+                ...styles.statusDot,
+                backgroundColor: selectedSession ? COLORS.statusIdle : COLORS.statusOffline,
+              }}
+            />
+            <span style={styles.statusLabel}>
+              {selectedSession ? "Active" : "Idle"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -129,10 +163,7 @@ export function MessagePanel({
                 <span style={styles.messageName}>{msg.role}</span>
                 {msg.timestamp && (
                   <span style={styles.messageTime}>
-                    {new Date(msg.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatTimestamp(msg.timestamp)}
                   </span>
                 )}
               </div>
@@ -218,6 +249,41 @@ const styles = {
     backgroundColor: COLORS.bgSurface,
     height: "56px",
     boxSizing: "border-box" as const,
+  } as React.CSSProperties,
+
+  headerLeft: {
+    display: "flex",
+    flexDirection: "column" as const,
+    justifyContent: "center",
+    flex: 1,
+  } as React.CSSProperties,
+
+  headerRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: SPACING.md,
+    marginLeft: SPACING.lg,
+  } as React.CSSProperties,
+
+  headerButton: {
+    width: "32px",
+    height: "32px",
+    padding: 0,
+    backgroundColor: COLORS.bgSurface,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: RADIUS.sm,
+    cursor: "pointer",
+    fontSize: "16px",
+    color: COLORS.textPrimary,
+    transition: TRANSITIONS.fast,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as React.CSSProperties,
+
+  buttonDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed",
   } as React.CSSProperties,
 
   title: {
@@ -392,14 +458,16 @@ const styles = {
     resize: "none" as const,
     minHeight: "40px",
     maxHeight: "120px",
-    transition: `border-color ${TRANSITIONS.fast}`,
+    transition: `border-color ${TRANSITIONS.fast}, box-shadow ${TRANSITIONS.fast}`,
     color: COLORS.textPrimary,
+    backgroundColor: COLORS.bgSurface,
   } as React.CSSProperties,
 
   inputDisabled: {
     opacity: 0.6,
     backgroundColor: COLORS.bgSidebar,
     cursor: "not-allowed" as const,
+    color: COLORS.textTertiary,
   } as React.CSSProperties,
 
   sendButton: {
@@ -414,6 +482,11 @@ const styles = {
     transition: `all ${TRANSITIONS.fast}`,
     minWidth: "70px",
     height: "40px",
+  } as React.CSSProperties,
+
+  sendButtonHover: {
+    backgroundColor: COLORS.accentHover,
+    boxShadow: `0 2px 8px rgba(196, 90, 44, 0.2)`,
   } as React.CSSProperties,
 
   sendButtonDisabled: {

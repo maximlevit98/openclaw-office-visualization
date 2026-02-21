@@ -255,7 +255,9 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: SPACING.sm,
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTop: `1px solid ${COLORS.borderSubtle}`,
   } as React.CSSProperties,
 
   statusDot: {
@@ -263,11 +265,13 @@ const styles = {
     height: "10px",
     borderRadius: RADIUS.full,
     flexShrink: 0,
+    boxShadow: `0 0 0 2px ${COLORS.bgSurface}`,
   } as React.CSSProperties,
 
   statusText: {
     fontSize: "12px",
     fontWeight: "500",
+    textTransform: "capitalize" as const,
   } as React.CSSProperties,
 
   statusStrip: {
@@ -296,6 +300,8 @@ const styles = {
     cursor: "pointer",
     transition: `all ${TRANSITIONS.fast}`,
     flexShrink: 0,
+    padding: "4px",
+    borderRadius: RADIUS.md,
   } as React.CSSProperties,
 
   stripItemOffline: {
@@ -309,6 +315,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: `0 1px 3px rgba(26, 24, 22, 0.06)`,
   } as React.CSSProperties,
 
   stripAvatarText: {

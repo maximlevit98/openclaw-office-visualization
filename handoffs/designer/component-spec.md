@@ -1,11 +1,50 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (Cycle 3 — Phase 1 refinement)  
-> **Implementation Status:** ✅ Cycle 3 Code Implementation Complete
+> Last updated: 2026-02-21 (Cycle 5 — Styling & Accessibility Refinement)  
+> **Implementation Status:** ✅ Cycle 5 Design Token Alignment Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
+
+---
+
+## 🎨 **CYCLE 5 DELTA — Styling & Accessibility Enhancements**
+
+**Direct Code Impact (Feb 21, 04:11 Moscow)**
+
+### SessionList Component
+- ✅ **Fixed design token alignment:** Replaced hard-coded colors with design tokens (was using old gray palette)
+- ✅ **Improved selected state:** Added border-left accent indicator (matches sidebar spec)
+- ✅ **Better spacing:** Aligned padding/margins to token values
+
+### Layout & Animations
+- ✅ **Added `slideInLeft` animation:** Tablet sidebar overlay now slides in smoothly (200ms ease-out)
+- ✅ **Improved focus-visible states:** All interactive elements now have proper keyboard navigation feedback
+- ✅ **Better grid structure:** Desktop 3-col and Tablet 2-col layouts now explicitly declared with rows
+
+### MessagePanel Styling
+- ✅ **Enhanced input focus states:** Better visual feedback on text input (border + shadow transition)
+- ✅ **Improved disabled state contrast:** Disabled inputs now show text-tertiary color for readability
+- ✅ **Send button hover effect:** Added subtle shadow on hover (matches accent palette)
+
+### OfficePanel Cards
+- ✅ **Status badge separation:** Added border-top divider for visual hierarchy
+- ✅ **Status dot elevation:** Added subtle box-shadow to dots for depth
+- ✅ **Text capitalization:** Status labels now capitalize properly (thinking, idle, etc.)
+
+### Sidebar Icon Strip (Tablet)
+- ✅ **Improved hover/selected states:** Box-shadow feedback on selection
+- ✅ **Better border handling:** Consistent 2px border styling
+- ✅ **Avatar elevation:** Subtle shadows on strip avatars for visual depth
+
+**Testing:**
+- ✅ Build succeeds (no TypeScript errors)
+- ✅ All responsive breakpoints verified
+- ✅ Focus states working on keyboard navigation
+- ✅ Design tokens consistently applied
+
+---
 >
 > **Code Status (Cycle 3 Implementation):**
 > - ✅ Design tokens (`lib/design-tokens.ts`): Complete — 8 base colors + 5 status + 3 accents + typography + spacing + radius

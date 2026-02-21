@@ -168,18 +168,18 @@ const styles = {
     padding: SPACING.sm,
     borderRadius: RADIUS.md,
     backgroundColor: "transparent",
-    border: `1px solid transparent`,
+    border: `2px solid transparent`,
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    transition: `all ${COLORS.borderDefault}`,
+    transition: `all 150ms ease-out`,
   } as React.CSSProperties,
 
   iconItemSelected: {
     backgroundColor: COLORS.bgSurface,
     borderColor: COLORS.accentPrimary,
-    borderWidth: "2px",
+    boxShadow: `0 2px 8px rgba(196, 90, 44, 0.15)`,
   } as React.CSSProperties,
 
   avatarInitial: {
