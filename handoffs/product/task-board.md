@@ -1,27 +1,28 @@
 # Office Visualization — Execution Task Board
 
-> Updated: 2026-02-21 15:55 (Cycle 9 — Checkpoint abc6e74, QA_GATE:PASS, NO_RUNTIME_ERRORS)
+> Updated: 2026-02-21 16:55 (Cycle 9 — Checkpoint 6beb7f8, QA_GATE:PASS 16:35, Agent Chat API Live)
 
 ## 🎯 PHASE 2: LIVE PRESENCE & POLISH (CODE READY)
 
 **Goal:** Commit 6 Phase 2 features. Complete usePresence hook. Ship Phase 2.
 
-### Current Status (Cycle 9 — 15:55 Moscow)
+### Current Status (Cycle 9 — 16:55 Moscow)
 
-**DONE (7/7):**
+**DONE (8/8):**
 - ✅ Phase 1–3: MVP, SSE, control API shipped
-- ✅ QA Gate PASS (15:53): NO_RUNTIME_ERRORS, NO_NEW_BUGS
-- ✅ Control Routes: /control/jobs/*, /api/control/* active
-- ✅ Checkpoint abc6e74: qa-gate.sh, config, docs committed
-- ✅ Backend: Job orchestration + activity streaming live
-- ✅ Frontend: Control UI (OfficeSimulation, AgentChatSidebar)
-- ✅ Robustness: Retry logic, error handling verified
+- ✅ QA Gate PASS (16:35): NO_RUNTIME_ERRORS, NO_NEW_BUGS
+- ✅ Agent Chat API: /api/control/agents/[agentId]/chat/* live
+- ✅ Job History Route: /api/control/jobs/[id]/history/* active
+- ✅ Checkpoint 6beb7f8: New agent/job routes, control logic, component specs
+- ✅ Control Plane: Activity streaming, job tracking, agent chat complete
+- ✅ Frontend: OfficeSimulation UI, AgentChatSidebar component
+- ✅ Robustness: Retry logic, error handling, runtime clean
 
 **IN_PROGRESS:**
-- 🟡 Phase 4: Message formatting refinement
+- 🟡 Phase 4: Message formatting polish
 
 **BLOCKERS:**
-- ❌ None — build stable, runtime clean, production ready
+- ❌ None — all gates PASS, production ready
 
 ---
 

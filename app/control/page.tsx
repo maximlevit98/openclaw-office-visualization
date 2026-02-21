@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchJSON, postJSON } from "@/lib/client-fetch";
-import { COLORS, SHADOWS, SPACING, TYPOGRAPHY } from "@/lib/design-tokens";
+import {
+  COLORS as BASE_COLORS,
+  SHADOWS as BASE_SHADOWS,
+  SPACING as BASE_SPACING,
+  TYPOGRAPHY as BASE_TYPOGRAPHY,
+} from "@/lib/design-tokens";
 import { getLocaleButtonLabel, Locale } from "@/lib/i18n";
 import { useSyncedLocale } from "@/lib/locale-client";
 
@@ -156,6 +161,53 @@ interface ActivityLogEntry extends LiveActivityEntry {
   eventKey: string;
 }
 
+const COLORS = {
+  ...BASE_COLORS,
+  bgPrimary: "#0b0f17",
+  bgSurface: "#111827",
+  bgSidebar: "#0f1624",
+  borderDefault: "#283243",
+  borderSubtle: "#334156",
+  textPrimary: "#e5ecf5",
+  textSecondary: "#9cabbe",
+  textTertiary: "#73849b",
+  statusIdle: "#2ea043",
+  statusError: "#f85149",
+  statusOffline: "#6b778d",
+  statusOnline: "#3fb9ff",
+  accentPrimary: "#3d7bfa",
+  accentHover: "#5a92ff",
+};
+
+const SHADOWS = {
+  ...BASE_SHADOWS,
+  card: "0 0 0 1px rgba(255, 255, 255, 0.02), 0 8px 18px rgba(0, 0, 0, 0.22)",
+  panel: "0 1px 0 rgba(255, 255, 255, 0.03), 0 16px 34px rgba(0, 0, 0, 0.32)",
+  hover: "0 0 0 1px rgba(63, 136, 255, 0.34), 0 14px 28px rgba(0, 0, 0, 0.35)",
+};
+
+const SPACING = {
+  ...BASE_SPACING,
+  xs: "6px",
+  sm: "10px",
+  md: "14px",
+  lg: "18px",
+  xl: "24px",
+};
+
+const TYPOGRAPHY = {
+  ...BASE_TYPOGRAPHY,
+  fontFamily:
+    "'Inter', 'Segoe UI', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif",
+  fontMono:
+    "'SFMono-Regular', 'JetBrains Mono', 'Menlo', 'Consolas', 'Liberation Mono', monospace",
+  textXs: "12px",
+  textSm: "14px",
+  textBase: "15px",
+  textLg: "22px",
+  textXl: "26px",
+};
+
 const statusColors: Record<string, string> = {
   ok: COLORS.statusIdle,
   error: COLORS.statusError,
@@ -163,15 +215,17 @@ const statusColors: Record<string, string> = {
 };
 
 const CONTROL_MAIN_SPLIT_KEY = "openclaw-control-main-split-width";
-const CONTROL_MAIN_MIN_WIDTH = 420;
-const CONTROL_MAIN_MAX_WIDTH = 2000;
+const CONTROL_MAIN_MIN_WIDTH = 280;
+const CONTROL_MAIN_MAX_WIDTH = 1400;
 const CONTROL_MAIN_RESIZER_WIDTH = 16;
 const CHAT_ONLY_MODE = true;
 const CONTROL_CHAT_STATE_KEY = "openclaw-control-agent-chat-state-v1";
+const CONTROL_READ_TIMEOUT_MS = 45000;
+const CONTROL_READ_RETRIES = 2;
 
 const CONTROL_TEXT = {
   en: {
-    title: "AGENT CONTROL PANEL",
+    title: "Agent Control",
     subtitle: "Multi-project admin: projects, agents, prompts, and runs in one place",
     liveFeed: "Live Agent Activity",
     liveProcessForJob: "Live Process: Selected Job",
@@ -201,6 +255,8 @@ const CONTROL_TEXT = {
     loadingJobs: "Loading jobs...",
     noJobs: "No jobs found.",
     noJobsForSelectedAgents: "No jobs found for selected project agents.",
+    searchAgents: "Search agents...",
+    noAgentsMatchSearch: "No agents match the search.",
     selectJob: "Select a job to inspect prompt and runs.",
     loadingJobDetail: "Loading job detail...",
     failedLoadDetail: "Failed to load detail.",
@@ -287,7 +343,7 @@ const CONTROL_TEXT = {
     projectCreatedWithId: (id: string) => `Project created: ${id}`,
   },
   ru: {
-    title: "ПАНЕЛЬ УПРАВЛЕНИЯ АГЕНТАМИ",
+    title: "Панель агентов",
     subtitle: "Управление проектами, агентами, промптами и запусками в одном месте",
     liveFeed: "Активность агентов (Live)",
     liveProcessForJob: "Live-процесс: выбранная задача",
@@ -317,6 +373,8 @@ const CONTROL_TEXT = {
     loadingJobs: "Загрузка задач...",
     noJobs: "Задачи не найдены.",
     noJobsForSelectedAgents: "Для агентов выбранного проекта задачи не найдены.",
+    searchAgents: "Поиск агентов...",
+    noAgentsMatchSearch: "По вашему поиску агенты не найдены.",
     selectJob: "Выберите задачу, чтобы посмотреть промпт и запуски.",
     loadingJobDetail: "Загрузка деталей задачи...",
     failedLoadDetail: "Не удалось загрузить детали.",
@@ -421,7 +479,7 @@ export default function ControlPage() {
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isNarrow, setIsNarrow] = useState(false);
-  const [jobsPaneWidth, setJobsPaneWidth] = useState(780);
+  const [jobsPaneWidth, setJobsPaneWidth] = useState(360);
   const [isResizingMain, setIsResizingMain] = useState(false);
   const mainResizeStateRef = useRef<MainResizeState | null>(null);
   const [activityEntries, setActivityEntries] = useState<LiveActivityEntry[]>([]);
@@ -447,6 +505,7 @@ export default function ControlPage() {
   const [chatByAgent, setChatByAgent] = useState<Record<string, AgentChatSessionState>>({});
   const [chatDraftByAgent, setChatDraftByAgent] = useState<Record<string, string>>({});
   const [sendingChat, setSendingChat] = useState(false);
+  const [agentSearch, setAgentSearch] = useState("");
   const chatListRef = useRef<HTMLDivElement | null>(null);
 
   const [projectNameDraft, setProjectNameDraft] = useState("");
@@ -548,6 +607,18 @@ export default function ControlPage() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [projectDetail, visibleJobs]);
+
+  const filteredAgents = useMemo(() => {
+    const query = agentSearch.trim().toLowerCase();
+    if (!query) return visibleAgents;
+    return visibleAgents.filter((agent) => {
+      return (
+        agent.id.toLowerCase().includes(query) ||
+        agent.label.toLowerCase().includes(query) ||
+        (agent.model || "").toLowerCase().includes(query)
+      );
+    });
+  }, [visibleAgents, agentSearch]);
 
   const selectedAgentJobs = useMemo(() => {
     if (!selectedAgentId) return [];
@@ -686,6 +757,19 @@ export default function ControlPage() {
   }, [visibleAgents, selectedAgentId, selectedJob]);
 
   useEffect(() => {
+    if (!CHAT_ONLY_MODE) return;
+    if (filteredAgents.length === 0) return;
+    if (selectedAgentId && filteredAgents.some((agent) => agent.id === selectedAgentId)) return;
+
+    const fallback = filteredAgents[0];
+    setSelectedAgentId(fallback.id);
+    const firstJob = fallback.jobs[0];
+    if (firstJob) {
+      setSelectedId(firstJob.id);
+    }
+  }, [filteredAgents, selectedAgentId]);
+
+  useEffect(() => {
     if (!selectedId) return;
     const timer = window.setInterval(() => {
       void loadRunHistory(selectedId, { silent: true });
@@ -781,6 +865,14 @@ export default function ControlPage() {
   }, [chatByAgent]);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.classList.add("control-cursor-theme");
+    return () => {
+      document.body.classList.remove("control-cursor-theme");
+    };
+  }, []);
+
+  useEffect(() => {
     const node = chatListRef.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
@@ -797,8 +889,8 @@ export default function ControlPage() {
     setError("");
     try {
       const data = await fetchJSON<ControlJobListItem[]>("/api/control/jobs", {
-        timeoutMs: 15000,
-        retries: 1,
+        timeoutMs: CONTROL_READ_TIMEOUT_MS,
+        retries: CONTROL_READ_RETRIES,
         skipCache: true,
       });
       setJobs(Array.isArray(data) ? data : []);
@@ -815,8 +907,8 @@ export default function ControlPage() {
     setError("");
     try {
       const data = await fetchJSON<ControlProjectListItem[]>("/api/control/projects", {
-        timeoutMs: 15000,
-        retries: 1,
+        timeoutMs: CONTROL_READ_TIMEOUT_MS,
+        retries: CONTROL_READ_RETRIES,
         skipCache: true,
       });
       const nextProjects = Array.isArray(data) ? data : [];
@@ -842,8 +934,8 @@ export default function ControlPage() {
       const data = await fetchJSON<ControlProjectDetail>(
         `/api/control/projects/${encodeURIComponent(projectId)}`,
         {
-          timeoutMs: 15000,
-          retries: 1,
+          timeoutMs: CONTROL_READ_TIMEOUT_MS,
+          retries: CONTROL_READ_RETRIES,
           skipCache: true,
         }
       );
@@ -863,20 +955,20 @@ export default function ControlPage() {
     try {
       const [job, run, history] = await Promise.all([
         fetchJSON<ControlJobDetail>(`/api/control/jobs/${encodeURIComponent(id)}`, {
-          timeoutMs: 15000,
-          retries: 1,
+          timeoutMs: CONTROL_READ_TIMEOUT_MS,
+          retries: CONTROL_READ_RETRIES,
           skipCache: true,
         }),
         fetchJSON<LastRunResponse>(`/api/control/jobs/${encodeURIComponent(id)}/last`, {
-          timeoutMs: 15000,
-          retries: 1,
+          timeoutMs: CONTROL_READ_TIMEOUT_MS,
+          retries: CONTROL_READ_RETRIES,
           skipCache: true,
         }),
         fetchJSON<RunHistoryResponse>(
           `/api/control/jobs/${encodeURIComponent(id)}/history?limit=24`,
           {
-            timeoutMs: 15000,
-            retries: 1,
+            timeoutMs: CONTROL_READ_TIMEOUT_MS,
+            retries: CONTROL_READ_RETRIES,
             skipCache: true,
           }
         ),
@@ -911,8 +1003,8 @@ export default function ControlPage() {
       const history = await fetchJSON<RunHistoryResponse>(
         `/api/control/jobs/${encodeURIComponent(id)}/history?limit=24`,
         {
-          timeoutMs: 15000,
-          retries: 1,
+          timeoutMs: CONTROL_READ_TIMEOUT_MS,
+          retries: CONTROL_READ_RETRIES,
           skipCache: true,
         }
       );
@@ -1240,6 +1332,40 @@ export default function ControlPage() {
 
   return (
     <div style={styles.page}>
+      <style jsx global>{`
+        body.control-cursor-theme {
+          background-color: #0b0f17 !important;
+          background-image: radial-gradient(circle at 18% 12%, #1b2438 0%, #0b0f17 55%, #090d14 100%) !important;
+          color: #e5ecf5 !important;
+          font-family: ${TYPOGRAPHY.fontFamily} !important;
+          image-rendering: auto !important;
+          letter-spacing: 0 !important;
+        }
+
+        body.control-cursor-theme::before {
+          display: none !important;
+        }
+
+        body.control-cursor-theme ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        body.control-cursor-theme ::-webkit-scrollbar-track {
+          background: #0f1624;
+          border: 1px solid #283243;
+        }
+
+        body.control-cursor-theme ::-webkit-scrollbar-thumb {
+          background: #3d7bfa;
+          border: 1px solid #283243;
+          border-radius: 10px;
+        }
+
+        body.control-cursor-theme ::-webkit-scrollbar-thumb:hover {
+          background: #5a92ff;
+        }
+      `}</style>
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>{t.title}</h1>
@@ -1333,7 +1459,7 @@ export default function ControlPage() {
         <section style={styles.sidebar}>
           <div style={styles.sectionHeaderRow}>
             <h2 style={styles.sectionTitle}>{CHAT_ONLY_MODE ? t.agents : t.jobs}</h2>
-            <span style={styles.pillCount}>{CHAT_ONLY_MODE ? visibleAgents.length : visibleJobs.length}</span>
+            <span style={styles.pillCount}>{CHAT_ONLY_MODE ? filteredAgents.length : visibleJobs.length}</span>
           </div>
 
           {!CHAT_ONLY_MODE && (
@@ -1345,6 +1471,14 @@ export default function ControlPage() {
           )}
 
           <div style={styles.agentScopePanel}>
+            {CHAT_ONLY_MODE ? (
+              <input
+                style={styles.agentSearchInput}
+                value={agentSearch}
+                onChange={(event) => setAgentSearch(event.target.value)}
+                placeholder={t.searchAgents}
+              />
+            ) : null}
             {!CHAT_ONLY_MODE && (
               <div style={styles.sectionHeaderRow}>
                 <h3 style={styles.sectionTitle}>{t.agents}</h3>
@@ -1353,9 +1487,11 @@ export default function ControlPage() {
             )}
             {visibleAgents.length === 0 ? (
               <p style={styles.dimText}>{t.noAgentsInScope}</p>
+            ) : filteredAgents.length === 0 ? (
+              <p style={styles.dimText}>{t.noAgentsMatchSearch}</p>
             ) : (
               <div style={styles.agentButtonList}>
-                {visibleAgents.map((agent) => {
+                {filteredAgents.map((agent) => {
                   const isSelectedAgent = selectedAgentId === agent.id;
                   const firstJob = agent.jobs[0];
                   const liveItem = agent.jobs
@@ -2037,7 +2173,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function getControlMainMaxWidth(viewportWidth: number): number {
-  const ratio = viewportWidth >= 1440 ? 0.75 : 0.78;
+  const ratio = viewportWidth >= 1440 ? 0.42 : 0.48;
   const adaptive = Math.floor(viewportWidth * ratio);
   return clamp(adaptive, CONTROL_MAIN_MIN_WIDTH, CONTROL_MAIN_MAX_WIDTH);
 }
@@ -2113,7 +2249,8 @@ const styles = {
     color: COLORS.textPrimary,
     display: "flex",
     flexDirection: "column" as const,
-    padding: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    padding: SPACING.sm,
     gap: SPACING.md,
     overflowY: "auto" as const,
     overflowX: "hidden" as const,
@@ -2123,27 +2260,33 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: SPACING.lg,
     flexWrap: "wrap" as const,
-    border: `3px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "12px",
     backgroundColor: COLORS.bgSurface,
-    padding: SPACING.lg,
+    padding: `${SPACING.md} ${SPACING.lg}`,
     boxShadow: SHADOWS.panel,
+    position: "sticky" as const,
+    top: SPACING.sm,
+    zIndex: 12,
   } as React.CSSProperties,
 
   title: {
     margin: 0,
-    fontSize: TYPOGRAPHY.textLg,
-    lineHeight: 1.6,
+    fontSize: "17px",
+    fontWeight: 600,
+    lineHeight: 1.35,
+    letterSpacing: "0.01em",
   } as React.CSSProperties,
 
   subtitle: {
     margin: 0,
     marginTop: SPACING.xs,
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "12px",
     color: COLORS.textSecondary,
-    lineHeight: 1.6,
+    lineHeight: 1.45,
   } as React.CSSProperties,
 
   headerButtons: {
@@ -2165,32 +2308,35 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: SPACING.xs,
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
     padding: `${SPACING.xs} ${SPACING.sm}`,
   } as React.CSSProperties,
 
   projectPickerLabel: {
-    fontSize: "9px",
+    fontSize: "11px",
     color: COLORS.textSecondary,
     whiteSpace: "nowrap" as const,
   } as React.CSSProperties,
 
   selectInput: {
-    border: `2px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSurface,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "8px",
+    backgroundColor: COLORS.bgSidebar,
     color: COLORS.textPrimary,
-    boxShadow: SHADOWS.card,
-    padding: "4px 8px",
-    fontSize: TYPOGRAPHY.textXs,
+    boxShadow: "none",
+    padding: "7px 10px",
+    fontSize: "12px",
     minWidth: "160px",
     width: "min(240px, 42vw)",
     maxWidth: "100%",
   } as React.CSSProperties,
 
   projectMetaBlock: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
     padding: `${SPACING.xs} ${SPACING.sm}`,
@@ -2203,7 +2349,7 @@ const styles = {
 
   projectMetaInline: {
     margin: 0,
-    fontSize: "9px",
+    fontSize: "11px",
     color: COLORS.textSecondary,
     whiteSpace: "nowrap" as const,
     overflow: "hidden",
@@ -2211,7 +2357,8 @@ const styles = {
   } as React.CSSProperties,
 
   langWrap: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
     padding: `${SPACING.xs} ${SPACING.sm}`,
@@ -2227,48 +2374,61 @@ const styles = {
   } as React.CSSProperties,
 
   langButton: {
-    border: `2px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSidebar,
-    boxShadow: SHADOWS.card,
-    padding: "4px 8px",
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "8px",
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: "none",
+    padding: "6px 10px",
     minWidth: "40px",
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "12px",
     color: COLORS.textPrimary,
     cursor: "pointer",
   } as React.CSSProperties,
 
   langButtonActive: {
     backgroundColor: COLORS.accentPrimary,
-    boxShadow: SHADOWS.hover,
+    borderColor: COLORS.accentHover,
+    color: "#f5f9ff",
   } as React.CSSProperties,
 
   linkButton: {
-    border: `2px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSidebar,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "8px",
+    backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
-    padding: `${SPACING.sm} ${SPACING.md}`,
+    padding: `8px ${SPACING.md}`,
     color: COLORS.textPrimary,
     textDecoration: "none",
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "12px",
+    fontWeight: 500,
+    lineHeight: 1.2,
+    display: "inline-flex",
+    alignItems: "center",
   } as React.CSSProperties,
 
   actionButton: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.accentHover}`,
+    borderRadius: "8px",
     backgroundColor: COLORS.accentPrimary,
     boxShadow: SHADOWS.card,
-    padding: `${SPACING.sm} ${SPACING.md}`,
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.textXs,
+    padding: `8px ${SPACING.md}`,
+    color: "#f5f9ff",
+    fontSize: "12px",
+    fontWeight: 600,
+    lineHeight: 1.2,
     cursor: "pointer",
   } as React.CSSProperties,
 
   secondaryButton: {
-    border: `2px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSidebar,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "8px",
+    backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
-    padding: `${SPACING.sm} ${SPACING.md}`,
+    padding: `8px ${SPACING.md}`,
     color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "12px",
+    fontWeight: 500,
+    lineHeight: 1.2,
     cursor: "pointer",
   } as React.CSSProperties,
 
@@ -2447,8 +2607,9 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "minmax(560px, 56%) 16px minmax(0, 1fr)",
     gap: 0,
-    minHeight: "auto",
-    flex: "0 0 auto",
+    minHeight: 0,
+    flex: "1 1 auto",
+    minWidth: 0,
   } as React.CSSProperties,
 
   mainNarrow: {
@@ -2457,10 +2618,10 @@ const styles = {
   } as React.CSSProperties,
 
   mainResizer: {
-    borderTop: `3px solid ${COLORS.borderDefault}`,
-    borderBottom: `3px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSidebar,
-    boxShadow: SHADOWS.card,
+    borderTop: `1px solid ${COLORS.borderDefault}`,
+    borderBottom: `1px solid ${COLORS.borderDefault}`,
+    backgroundColor: "#0d1422",
+    boxShadow: "none",
     cursor: "col-resize",
     userSelect: "none" as const,
     touchAction: "none" as const,
@@ -2471,24 +2632,25 @@ const styles = {
   } as React.CSSProperties,
 
   mainResizerActive: {
-    backgroundColor: COLORS.accentPrimary,
-    boxShadow: SHADOWS.hover,
+    backgroundColor: "#14223a",
+    boxShadow: "none",
   } as React.CSSProperties,
 
   mainResizerGrip: {
-    width: "5px",
+    width: "4px",
     height: "42%",
-    border: `1px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSurface,
-    boxShadow: SHADOWS.card,
+    borderRadius: "99px",
+    backgroundColor: COLORS.borderSubtle,
+    boxShadow: "none",
   } as React.CSSProperties,
 
   sidebar: {
-    border: `3px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "12px",
     backgroundColor: COLORS.bgSurface,
     boxShadow: SHADOWS.panel,
-    padding: SPACING.lg,
-    overflowY: "visible" as const,
+    padding: SPACING.md,
+    overflowY: "hidden" as const,
     minHeight: "auto",
     display: "flex",
     flexDirection: "column" as const,
@@ -2497,16 +2659,17 @@ const styles = {
   } as React.CSSProperties,
 
   content: {
-    border: `3px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "12px",
     backgroundColor: COLORS.bgSurface,
     boxShadow: SHADOWS.panel,
-    padding: SPACING.lg,
+    padding: SPACING.md,
     display: "flex",
     flexDirection: "column" as const,
     gap: SPACING.md,
-    overflowY: "visible" as const,
+    overflowY: "hidden" as const,
     overflowX: "hidden" as const,
-    minHeight: "auto",
+    minHeight: 0,
     minWidth: 0,
   } as React.CSSProperties,
 
@@ -2520,7 +2683,9 @@ const styles = {
 
   sectionTitle: {
     margin: 0,
-    fontSize: TYPOGRAPHY.textSm,
+    fontSize: "15px",
+    fontWeight: 600,
+    letterSpacing: "0.01em",
   } as React.CSSProperties,
 
   livePanel: {
@@ -2534,25 +2699,42 @@ const styles = {
   } as React.CSSProperties,
 
   agentScopePanel: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
-    padding: SPACING.sm,
+    padding: SPACING.md,
     display: "flex",
     flexDirection: "column" as const,
-    gap: SPACING.xs,
+    gap: SPACING.sm,
+    minHeight: 0,
+    flex: "1 1 auto",
+  } as React.CSSProperties,
+
+  agentSearchInput: {
+    width: "100%",
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "8px",
+    backgroundColor: COLORS.bgSidebar,
+    color: COLORS.textPrimary,
+    boxShadow: "none",
+    padding: "8px 10px",
+    fontSize: "12px",
+    lineHeight: 1.3,
   } as React.CSSProperties,
 
   agentButtonList: {
     display: "flex",
     flexDirection: "column" as const,
     gap: SPACING.xs,
-    maxHeight: "260px",
+    maxHeight: "100%",
     overflowY: "auto" as const,
+    minHeight: 0,
   } as React.CSSProperties,
 
   agentButton: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
     backgroundColor: COLORS.bgSurface,
     boxShadow: SHADOWS.card,
     padding: SPACING.sm,
@@ -2564,7 +2746,8 @@ const styles = {
   } as React.CSSProperties,
 
   agentButtonSelected: {
-    backgroundColor: COLORS.accentPrimary,
+    borderColor: COLORS.accentPrimary,
+    backgroundColor: "#132238",
     boxShadow: SHADOWS.hover,
   } as React.CSSProperties,
 
@@ -2650,7 +2833,7 @@ const styles = {
 
   liveExcerpt: {
     margin: 0,
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "11px",
     color: COLORS.textSecondary,
     whiteSpace: "nowrap" as const,
     overflow: "hidden",
@@ -2659,9 +2842,9 @@ const styles = {
 
   dimText: {
     margin: 0,
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "12px",
     color: COLORS.textSecondary,
-    lineHeight: 1.6,
+    lineHeight: 1.45,
   } as React.CSSProperties,
 
   toggleWrap: {
@@ -2679,10 +2862,11 @@ const styles = {
 
   pillCount: {
     border: `1px solid ${COLORS.borderDefault}`,
-    backgroundColor: COLORS.bgSidebar,
-    boxShadow: SHADOWS.card,
-    padding: "2px 8px",
-    fontSize: "9px",
+    borderRadius: "999px",
+    backgroundColor: COLORS.bgPrimary,
+    boxShadow: "none",
+    padding: "2px 10px",
+    fontSize: "11px",
     color: COLORS.textPrimary,
   } as React.CSSProperties,
 
@@ -2717,19 +2901,20 @@ const styles = {
   } as React.CSSProperties,
 
   jobName: {
-    fontSize: TYPOGRAPHY.textXs,
+    fontSize: "13px",
+    fontWeight: 500,
     color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   statusDot: {
-    width: "10px",
-    height: "10px",
-    border: `1px solid ${COLORS.borderDefault}`,
+    width: "9px",
+    height: "9px",
+    borderRadius: "999px",
   } as React.CSSProperties,
 
   jobMeta: {
     margin: 0,
-    fontSize: "9px",
+    fontSize: "11px",
     color: COLORS.textSecondary,
     whiteSpace: "nowrap" as const,
     overflow: "hidden",
@@ -2778,7 +2963,8 @@ const styles = {
   } as React.CSSProperties,
 
   chatPane: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "12px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
     padding: SPACING.sm,
@@ -2790,51 +2976,66 @@ const styles = {
   } as React.CSSProperties,
 
   chatOnlyShell: {
-    border: `2px solid ${COLORS.borderDefault}`,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "12px",
     backgroundColor: COLORS.bgPrimary,
     boxShadow: SHADOWS.card,
     padding: SPACING.md,
     display: "flex",
     flexDirection: "column" as const,
-    gap: SPACING.sm,
-    minHeight: "560px",
+    gap: SPACING.md,
+    minHeight: 0,
     minWidth: 0,
+    flex: "1 1 auto",
+    overflow: "hidden" as const,
   } as React.CSSProperties,
 
   chatMessageList: {
     display: "flex",
     flexDirection: "column" as const,
-    gap: SPACING.xs,
-    maxHeight: "360px",
+    gap: SPACING.sm,
+    maxHeight: "100%",
     overflowY: "auto" as const,
-    paddingRight: "2px",
+    paddingRight: "4px",
+    minHeight: 0,
+    flex: "1 1 auto",
   } as React.CSSProperties,
 
   chatMessage: {
-    border: `2px solid ${COLORS.borderDefault}`,
-    boxShadow: SHADOWS.card,
-    padding: SPACING.xs,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
+    boxShadow: "none",
+    padding: "8px 10px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: "3px",
+    gap: "5px",
+    maxWidth: "92%",
   } as React.CSSProperties,
 
   chatMessageUser: {
-    backgroundColor: COLORS.bgSidebar,
+    alignSelf: "flex-end",
+    backgroundColor: "#1f3152",
+    borderColor: "#385f9f",
   } as React.CSSProperties,
 
   chatMessageAssistant: {
-    backgroundColor: COLORS.bgSurface,
+    alignSelf: "flex-start",
+    backgroundColor: "#141f33",
+    borderColor: "#2d3f5e",
   } as React.CSSProperties,
 
   chatMessageSystem: {
-    backgroundColor: COLORS.statusError,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(248, 81, 73, 0.16)",
+    borderColor: "rgba(248, 81, 73, 0.5)",
   } as React.CSSProperties,
 
   chatMessageRole: {
     margin: 0,
-    fontSize: "9px",
-    color: COLORS.textSecondary,
+    fontSize: "10px",
+    color: COLORS.textTertiary,
+    fontWeight: 600,
+    letterSpacing: "0.05em",
   } as React.CSSProperties,
 
   chatMessageText: {
@@ -2842,28 +3043,29 @@ const styles = {
     whiteSpace: "pre-wrap" as const,
     wordBreak: "break-word" as const,
     fontFamily: TYPOGRAPHY.fontMono,
-    fontSize: TYPOGRAPHY.textXs,
-    lineHeight: 1.5,
+    fontSize: "12px",
+    lineHeight: 1.45,
     color: COLORS.textPrimary,
   } as React.CSSProperties,
 
   chatMessageTime: {
     margin: 0,
-    fontSize: "9px",
+    fontSize: "10px",
     color: COLORS.textTertiary,
   } as React.CSSProperties,
 
   chatInput: {
     width: "100%",
-    minHeight: "92px",
+    minHeight: "110px",
     resize: "vertical" as const,
-    border: `2px solid ${COLORS.borderDefault}`,
-    boxShadow: SHADOWS.card,
-    backgroundColor: COLORS.bgSurface,
+    border: `1px solid ${COLORS.borderDefault}`,
+    borderRadius: "10px",
+    boxShadow: "none",
+    backgroundColor: COLORS.bgSidebar,
     color: COLORS.textPrimary,
     fontFamily: TYPOGRAPHY.fontMono,
-    fontSize: TYPOGRAPHY.textXs,
-    lineHeight: 1.5,
+    fontSize: "12px",
+    lineHeight: 1.45,
     padding: SPACING.sm,
   } as React.CSSProperties,
 

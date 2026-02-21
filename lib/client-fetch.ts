@@ -157,6 +157,7 @@ export async function fetchWithTimeout(
     body,
     skipDedup = false,
   } = options;
+  const maxAttempts = Math.max(1, retries + 1);
 
   // Check for in-flight request (deduplication)
   if (!skipDedup && method === "GET") {
@@ -178,10 +179,14 @@ export async function fetchWithTimeout(
   const requestPromise = (async () => {
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= retries; attempt++) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        let didTimeout = false;
+        const timeoutId = setTimeout(() => {
+          didTimeout = true;
+          controller.abort();
+        }, timeoutMs);
 
         try {
           const response = await fetch(url, {
@@ -199,19 +204,33 @@ export async function fetchWithTimeout(
           }
 
           return response;
+        } catch (error) {
+          const rawError = error instanceof Error ? error : new Error(String(error));
+          const message = rawError.message.toLowerCase();
+          const isAbort = rawError.name === "AbortError" || message.includes("aborted");
+          const normalizedError = didTimeout
+            ? new Error(`Request timed out after ${timeoutMs}ms`)
+            : isAbort
+              ? new Error("Request was aborted")
+              : rawError;
+          throw normalizedError;
         } finally {
           clearTimeout(timeoutId);
         }
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+        const message = lastError.message.toLowerCase();
 
         // Check if error is retryable
         const isRetryable =
-          lastError.name === "AbortError" || // Timeout
-          lastError.message.includes("fetch") || // Network error
-          lastError.message.includes("Failed to fetch");
+          lastError.name === "AbortError" || // Abort / timeout
+          message.includes("aborted") ||
+          message.includes("timeout") ||
+          message.includes("timed out") ||
+          message.includes("fetch") ||
+          message.includes("network");
 
-        if (!isRetryable || attempt === retries) {
+        if (!isRetryable || attempt === maxAttempts) {
           // Final attempt or non-retryable error
           throw new Error(
             `Failed to fetch ${url}: ${lastError.message}`
@@ -226,7 +245,7 @@ export async function fetchWithTimeout(
 
     throw (
       lastError ||
-      new Error(`Failed to fetch ${url} after ${retries} attempts`)
+      new Error(`Failed to fetch ${url} after ${maxAttempts} attempts`)
     );
   })();
 

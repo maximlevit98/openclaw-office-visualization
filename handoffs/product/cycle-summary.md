@@ -1,16 +1,17 @@
-# Cycle Summary — 2026-02-21 (Cycle 9 — 15:55 Moscow — Checkpoint abc6e74)
+# Cycle Summary — 2026-02-21 (Cycle 9 — 16:55 Moscow — Checkpoint 6beb7f8)
 
-> **Status:** Phase 1+2+3 SHIPPED | QA_GATE:PASS | NO_RUNTIME_ERRORS | Blockers: 0
+> **Status:** Phase 1+2+3 SHIPPED | Agent Chat API Live | QA_GATE:PASS 16:35 | Blockers: 0
 
 ## Executive Summary
 
-**Executive:** All phases shipped. QA gate clean: PASS, NO_RUNTIME_ERRORS. Checkpoint abc6e74. Production ready.
+**Executive:** Agent chat API added. QA gate PASS 16:35. Checkpoint 6beb7f8. Production ready.
 
-✅ **Phase 1–3 Live:** Session viewer + chat, real-time SSE presence, agent control plane
-✅ **QA Gate PASS:** 15:53, NO_RUNTIME_ERRORS, NO_NEW_BUGS verified
-✅ **Checkpoint abc6e74:** Control routes, qa-gate.sh, config updates (16 files)
-✅ **Robustness:** Retry logic, error handling, graceful fallbacks verified
-🟡 **Phase 4:** Message formatting polish in progress
+✅ **Phase 1–3 Shipped:** Session viewer, real-time SSE, control plane complete
+✅ **Agent Chat API:** /api/control/agents/[id]/chat/* route live
+✅ **Job History:** /api/control/jobs/[id]/history/* endpoint active
+✅ **QA Gate PASS:** 16:35, NO_RUNTIME_ERRORS, NO_NEW_BUGS
+✅ **Checkpoint 6beb7f8:** 2 new routes, 14 files (1.3K+ additions)
+🟡 **Phase 4:** Message formatting continues
 
 ---
 
