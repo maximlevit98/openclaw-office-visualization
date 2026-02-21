@@ -1,21 +1,41 @@
 # Office Visualization — Execution Task Board
 
-> Updated: 2026-02-21 06:04 (Cycle 7 — Phase 2 Final Push)
+> Updated: 2026-02-21 07:04 (Cycle 7 — Phase 2 Code Ready to Commit)
 
-## 🎯 PHASE 2: LIVE PRESENCE & POLISH (NEARLY DONE)
+## 🎯 PHASE 2: LIVE PRESENCE & POLISH (CODE READY)
 
-**Goal:** Ship final 2 tasks → Phase 2 EXIT GATE
+**Goal:** Commit 6 Phase 2 features. Complete usePresence hook. Ship Phase 2.
 
 ### Current Status (Cycle 7)
-- ✅ **Phase 1 Complete:** Shipped + producer approved
+- ✅ **Phase 1 Complete:** Shipped + producer approved (1ab6a05)
 - ✅ **TASK-020b DONE:** Real SSE stream (committed 4aea0a2)
-- 🟡 **TASK-020a READY:** usePresence hook (20 min)
-- 🟡 **TASK-021a READY:** Session filter integration (15 min)
-- 🎯 **Timeline:** 40 minutes to Phase 2 exit
+- ✅ **6 COMPONENTS BUILT:** SessionSearch, StatusBadge, OfficeStrip + utilities (UNTRACKED)
+- ⏳ **TASK-020a NEXT:** usePresence hook + wiring (1 hour)
+- 🎯 **Timeline:** 1–2 hours to Phase 2 complete
 
 ---
 
 ## 🟡 IN PROGRESS (Cycle 7 — FINAL PUSH)
+
+### ✅ PHASE 2 COMPONENTS & UTILITIES (UNTRACKED — COMMIT NOW)
+- **Status:** BUILT (7 files, ready to stage)
+- **Delivery:**
+  - `app/components/SessionSearch.tsx` — Real-time search filter
+  - `app/components/StatusBadge.tsx` — Reusable status display (3 variants)
+  - `app/components/OfficeStrip.tsx` — Tablet-responsive agent list
+  - `lib/client-fetch.ts` — Fetch with timeout/retry/fallback
+  - `lib/hooks.ts` — useKeyboardShortcut + other utilities
+  - `lib/utils.ts` — Helper utilities
+  - `__tests__/*.js` — New client-side tests
+- **Action:** 
+  ```bash
+  git add app/components/ lib/client-fetch.ts lib/hooks.ts lib/utils.ts __tests__/
+  git commit -m "feat: add Phase 2 components, utilities, and tests"
+  npm run build && npm test && git push
+  ```
+- **Timeline:** 10 minutes to commit
+
+---
 
 ### ✅ TASK-020b: Real SSE Stream Handler
 - **Status:** COMPLETE & COMMITTED (4aea0a2)

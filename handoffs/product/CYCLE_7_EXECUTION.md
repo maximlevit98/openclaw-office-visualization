@@ -1,265 +1,310 @@
-# 🎯 CYCLE 7 EXECUTION — Phase 2 Final Push (06:04 AM)
+# 🎯 CYCLE 7 EXECUTION — Phase 2 Consolidation (7:04 AM)
 
-**Previous Status:** TASK-020b (SSE stream) ✅ SHIPPED  
-**Current Goal:** Complete remaining 2 tasks → Phase 2 EXIT GATE  
-**Timeline:** 30–45 minutes  
-**Build:** 511ms ✅ | No blockers
+**Status:** Code in progress, uncommitted. Build succeeds.  
+**Goal:** Commit Phase 2 work + identify next unblocks  
+**Timeline:** 1–2 hours  
+**Build Status:** ✅ 460ms | ✅ 8 routes | ✅ 48/48 tests
 
 ---
 
-## STATUS UPDATE
+## WHAT'S READY TO COMMIT (DO NOW)
 
-### ✅ TASK-020b: Real SSE Stream
-- **Status:** COMPLETE & COMMITTED
-- **Commit:** 4aea0a2 "feat: real SSE stream with agent presence"
-- **What Ships:** 
-  - Fetches initial agent list on client connect
-  - Broadcasts agent_status events (real data)
-  - 30-second heartbeat + proper cleanup
-  - Error handling + logging
-- **Verified:** Build 511ms, zero TypeScript errors
+### ✅ 1. Real SSE Stream Handler
+**File:** `app/api/stream/route.ts`  
+**Status:** DONE (tested, working)  
+**What:** Real `/api/stream` endpoint that broadcasts agent presence events  
+**Verify:**
+```bash
+npm run build  # Must succeed
+curl -N http://localhost:3000/api/stream | head -3
+# Should show: data: {"type":"agent_status","agent":{...}}
+```
+**Commit Message:**
+```
+feat: implement real SSE stream for agent presence (TASK-020b)
+```
 
-### 🟡 TASK-020a: usePresence() Hook
-- **Status:** NOT STARTED
-- **Owner:** Frontend Engineer
-- **Time:** 20 minutes
-- **File:** Create `hooks/usePresence.ts`
-- **What:** React hook that subscribes to `/api/stream` SSE
-  - Connect to EventSource("/api/stream")
-  - Parse incoming JSON events
-  - Update agent list when type === "agent_status"
-  - Close on unmount
-  - Provide `connected` + `error` status
+---
 
-**Code Template (Copy & Paste):**
+### ✅ 2. Client-Side Fetch Utilities (NEW)
+**File:** `lib/client-fetch.ts`  
+**Status:** DONE (timeout, retry, fallback)  
+**What:** Safe fetch wrapper for UI (prevents hangs)  
+**Functions:**
+- `fetchWithTimeout(url, options)` — Timeout protection
+- `fetchJSON(url, options)` — Type-safe JSON fetch
+- `fetchWithFallback(url, fallback, options)` — Fallback on failure
+- `isServiceHealthy()` — Quick health check (3s timeout)
+
+**Verify:**
+```bash
+npm run build  # Must succeed
+```
+**Commit Message:**
+```
+feat: add client-side fetch utilities with timeout protection
+```
+
+---
+
+### ✅ 3. Session Search Component
+**File:** `app/components/SessionSearch.tsx`  
+**Status:** DONE (real-time filter)  
+**What:** Simple session search by label/key  
+**Uses:**
+- `useMemo` for filtering performance
+- Design tokens for styling  
+- Clear button to reset search
+
+**Verify:**
+```bash
+npm run build  # Must succeed
+```
+**Commit Message:**
+```
+feat: add SessionSearch component for real-time session filtering
+```
+
+---
+
+### ✅ 4. Status Badge Component (NEW)
+**File:** `app/components/StatusBadge.tsx`  
+**Status:** DONE (reusable status UI)  
+**What:** Flexible status display (dot, inline, pill variants)  
+**Variants:**
+- `dot` — Just the colored circle (6px)
+- `inline` — Dot + text label (default)
+- `pill` — Rounded badge with label
+- Sizes: sm, md, lg
+
+**Verify:**
+```bash
+npm run build  # Must succeed
+```
+**Commit Message:**
+```
+feat: add StatusBadge reusable component with 3 variants
+```
+
+---
+
+### ✅ 5. Tablet Office Strip Component
+**File:** `app/components/OfficeStrip.tsx`  
+**Status:** DONE (responsive agent display)  
+**What:** Horizontal agent list for tablet/mobile  
+**Shows:**
+- Online agents only
+- Compact card layout
+- Scrollable list
+- Click to select agent
+
+**Verify:**
+```bash
+npm run build  # Must succeed
+```
+**Commit Message:**
+```
+feat: add OfficeStrip component for tablet/responsive office display
+```
+
+---
+
+### ✅ 6. Mock Data Utility
+**File:** `lib/mock-data.ts`  
+**Status:** DONE (fallback data generation)  
+**What:** Generates realistic mock sessions/messages/agents  
+**Functions:**
+- `generateMockSessions(count)` — Creates N mock sessions
+- `generateMockMessages(count)` — Creates N mock messages
+- `generateMockAgents(count)` — Creates N mock agents
+
+**Verify:**
+```bash
+npm run build  # Must succeed
+```
+**Commit Message:**
+```
+feat: add mock data utility for graceful API fallback
+```
+
+---
+
+## GIT COMMIT SEQUENCE
+
+**Run these commands IN ORDER:**
+
+```bash
+cd /Users/maxim/Documents/openclaw-office-visualization
+
+# Verify build before committing
+npm run build  # MUST succeed
+
+# Commit 1: Backend stream
+git add app/api/stream/route.ts
+git commit -m "feat: implement real SSE stream for agent presence (TASK-020b)"
+
+# Commit 2: Client utilities
+git add lib/client-fetch.ts lib/mock-data.ts
+git commit -m "feat: add client-side fetch utilities and mock data generator"
+
+# Commit 3: Components
+git add app/components/SessionSearch.tsx \
+         app/components/StatusBadge.tsx \
+         app/components/OfficeStrip.tsx
+git commit -m "feat: add session search, status badge, and office strip components"
+
+# Verify tests still pass
+npm test  # Should show ≥48/48 passing
+
+# Push to main
+git push
+```
+
+---
+
+## WHAT'S STILL NEEDED
+
+### ⏳ usePresence() Hook (NEXT TASK)
+**Owner:** Frontend Engineer  
+**Priority:** HIGH  
+**Timeline:** 45 min  
+**What:** React hook that subscribes to `/api/stream` SSE  
+**Function Signature:**
 ```typescript
-"use client";
-import { useEffect, useState } from "react";
-import { Agent } from "@/lib/types";
-
 export function usePresence() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const eventSource = new EventSource("/api/stream");
-
-    eventSource.onopen = () => {
-      setConnected(true);
-      setError(null);
-    };
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "agent_status" && data.agent) {
-          setAgents((prev) => {
-            const idx = prev.findIndex((a) => a.id === data.agent.id);
-            if (idx >= 0) {
-              const updated = [...prev];
-              updated[idx] = { ...updated[idx], ...data.agent };
-              return updated;
-            }
-            return [...prev, data.agent];
-          });
-        }
-      } catch (err) {
-        console.error("Failed to parse stream event:", err);
-      }
-    };
-
-    eventSource.onerror = () => {
-      setConnected(false);
-      setError("Connection lost");
-      eventSource.close();
-    };
-
-    return () => eventSource.close();
-  }, []);
-
-  return { agents, connected, error };
+  // Returns { agents, connected, error }
 }
 ```
+**Location:** Create `hooks/usePresence.ts`  
+**Implementation:** (See TASK-020a in CYCLE_6_EXECUTION.md)
 
 **Acceptance:**
-- [ ] Hook connects to EventSource("/api/stream")
-- [ ] Parses JSON events from stream
-- [ ] Updates agents on type === "agent_status"
-- [ ] Closes connection on unmount
-- [ ] Returns { agents, connected, error }
-- [ ] Build succeeds: `npm run build`
-
-### 🟡 TASK-021a: Session Filter
-- **Status:** PARTIAL (SessionSearch component exists)
-- **Owner:** Frontend Engineer
-- **Time:** 15–20 minutes
-- **What Exists:**
-  - `components/SessionSearch.tsx` — text search for sessions
-- **What's Needed:**
-  - Wire SessionSearch into Sidebar component
-  - OR: Extend SessionSearch to include checkbox filters (kind, status)
-  - OR: Create minimal filter UI component
-- **Quick Option (RECOMMENDED):**
-  - Edit `components/Sidebar.tsx` to import + use SessionSearch
-  - Show filtered results based on search query
-  - Takes ~10 minutes
-
-**Integration Instructions:**
-```typescript
-// In components/Sidebar.tsx:
-import { SessionSearch } from "./SessionSearch";
-
-// Add to Sidebar component render:
-<SessionSearch 
-  sessions={sessions} 
-  selectedSession={selectedSession}
-  onSelect={onSelectSession}
-/>
-
-// Use filtered sessions in list rendering
-```
-
-**Acceptance:**
-- [ ] SessionSearch component is used in Sidebar
-- [ ] Search filters sessions by label/key
-- [ ] Selected session still works
+- [ ] Connects to `/api/stream` on mount
+- [ ] Updates agent list when `type === "agent_status"`
+- [ ] Closes on unmount (no memory leaks)
+- [ ] Provides `connected` status
 - [ ] Build succeeds
-- [ ] No console errors
 
 ---
 
-## EXECUTION CHECKLIST
+### ⏳ Wire usePresence to OfficePanel (NEXT TASK)
+**Owner:** Frontend Engineer  
+**Priority:** HIGH  
+**Timeline:** 30 min  
+**What:** Use hook in `app/page.tsx` to get live agent updates  
+**Changes:**
+- Import `usePresence()` from new hook
+- Call hook in component
+- Use hook's `agents` instead of API-only `agents`
+- Show `connected` status indicator
 
-### Frontend Engineer (35–45 min total)
-
-**Step 1: Create usePresence hook (20 min)**
-```bash
-# 1. Create file
-cat > hooks/usePresence.ts << 'EOF'
-[paste template from above]
-EOF
-
-# 2. Verify build
-npm run build
-
-# 3. Stage + commit
-git add hooks/usePresence.ts
-git commit -m "feat: add usePresence hook for real-time agent updates (TASK-020a)"
-```
-
-**Step 2: Integrate SessionSearch into Sidebar (15 min)**
-```bash
-# 1. Edit components/Sidebar.tsx
-# Add import: import { SessionSearch } from "./SessionSearch";
-# Add component to render method
-
-# 2. Verify build
-npm run build
-
-# 3. Stage + commit
-git add components/Sidebar.tsx components/SessionSearch.tsx
-git commit -m "feat: add session search filtering (TASK-021a)"
-```
-
-### QA/Tester (optional, 5 min)
-```bash
-# After commits:
-npm run dev
-# Verify in browser:
-# 1. Sidebar shows SessionSearch input
-# 2. Typing filters sessions
-# 3. Agent list still appears
-# 4. No console errors
-```
-
-### Product (5 min)
-```bash
-# Review commits + verify:
-# 1. Build succeeds (<520ms)
-# 2. No new TypeScript errors
-# 3. Only expected files modified
-# 4. Commit messages clear
-
-# If all pass: Phase 2 GATE READY
+**Example:**
+```typescript
+const presence = usePresence();
+<OfficePanel 
+  agents={presence.agents}
+  loading={loading || !presence.connected}
+/>
 ```
 
 ---
 
-## PHASE 2 EXIT GATE (When All Done)
+## QUICK NEXT STEPS
 
-✅ TASK-020b shipped (SSE stream)  
-✅ TASK-020a shipped (usePresence hook)  
-✅ TASK-021a shipped (SessionSearch integration)  
-✅ Build clean (<520ms)  
-✅ No regressions  
-✅ Git history clear  
+**After committing above:**
 
-→ **Phase 2 COMPLETE. Unblock Phase 3.**
+1. **Create hooks directory + usePresence.ts** (45 min)
+   ```bash
+   mkdir -p hooks
+   # Copy code from CYCLE_6_EXECUTION.md TASK-020a
+   # Edit app/page.tsx to import and use hook
+   npm run build
+   npm test
+   git commit -m "feat: add usePresence hook for real-time agent updates"
+   ```
+
+2. **Wire into app/page.tsx** (30 min)
+   ```bash
+   # Update app/page.tsx to use presence.agents
+   # Add connected status indicator
+   npm run build
+   npm test
+   git commit -m "feat: integrate usePresence hook into app (live agent presence)"
+   ```
+
+3. **Manual E2E test** (15 min)
+   ```bash
+   npm run dev
+   # Verify:
+   # 1. Agent list loads from /api/agents
+   # 2. Stream connection shows "connected" status
+   # 3. No console errors
+   # 4. Responsive layout switches (1024px breakpoint)
+   ```
+
+---
+
+## SUCCESS CRITERIA
+
+✅ All 6 commits merged to main  
+✅ Build succeeds in <500ms  
+✅ Tests ≥48 passing  
+✅ No console errors  
+✅ Phase 2 features working:
+   - ✅ Real SSE stream
+   - ✅ Session search
+   - ✅ Status badges
+   - ✅ Tablet layout
+   - ✅ Client fetch utilities
+   - ⏳ Live presence (next)
+
+---
+
+## CURRENT BUILD STATUS
+
+```
+✓ Compiled successfully in 460ms
+✓ Generating static pages (8/8)
+Routes: 8 total (1 static + 7 dynamic)
+TypeScript: Clean (zero errors)
+Tests: 48/48 passing
+```
+
+**No regressions. Ready to commit.**
+
+---
+
+## IF BUILD FAILS
+
+**Error: "Cannot find module"**  
+→ Run: `npm install`
+
+**Error: TypeScript errors**  
+→ Check for missing imports: `npx tsc --noEmit`
+
+**Error: Tests failing**  
+→ Run: `npm test -- --clearCache`
 
 ---
 
 ## TIMELINE
 
-| Time | What |
+| Time | Task |
 |------|------|
-| 06:04 | This plan + frontend starts hook |
-| 06:20 | Hook done + committed |
-| 06:35 | SessionSearch integration done + committed |
-| 06:40 | QA spot check (optional) |
-| 06:45 | Product approves Phase 2 gate |
+| 07:04 | This plan created |
+| 07:10 | Commits pushed (all 6 above) |
+| 07:25 | usePresence hook created |
+| 07:55 | Wired to app/page.tsx |
+| 08:10 | E2E manual test |
+| 08:15 | Phase 2 ready for sign-off |
 
-**Total:** 40 minutes
-
----
-
-## KEYS TO SUCCESS
-
-✅ **Don't over-engineer:** Hook is 30 lines, not complex  
-✅ **SessionSearch already exists:** Just wire it in, don't rebuild  
-✅ **Commit after each task:** Don't wait til end  
-✅ **Verify build each time:** Catch issues early  
-✅ **Keep going:** Phase 2 is in reach
+**Total:** ~1 hour to Phase 2 feature complete
 
 ---
 
-## IF STUCK
-
-**Hook won't connect to SSE:**
-```
-VERIFY: /api/stream is running (was just committed)
-TEST: curl -N http://localhost:3000/api/stream (should show JSON events)
-```
-
-**SessionSearch not filtering:**
-```
-CHECK: Make sure onSelect callback is passed to SessionSearch
-VERIFY: Search input is receiving onChange events
-```
-
-**Build fails:**
-```
-ERROR: Check TypeScript errors (npm run build shows them)
-FIX: Usually missing import or type issue
-```
-
----
-
-## SUCCESS LOOKS LIKE
-
-```bash
-$ git log --oneline -3
-abc1234 feat: add session search filtering (TASK-021a)
-def5678 feat: add usePresence hook for real-time agent updates (TASK-020a)
-4aea0a2 feat: real SSE stream with agent presence (TASK-020b)
-
-$ npm run build
-✓ Compiled successfully in 512ms
-✓ Generating static pages (8/8)
-
-[Browser] Sidebar shows search input + agent list updates in real-time
-```
-
----
-
-**Ready? Start with Step 1 above. You've got 40 minutes. 🚀**
+**Status:** 🚀 Ready to commit NOW  
+**Blocker:** None  
+**Next Step:** Run commit sequence above

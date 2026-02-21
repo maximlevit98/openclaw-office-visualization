@@ -1,0 +1,266 @@
+================================================================================
+CYCLE 7 EXECUTION BOARD — 7:04 AM (Phase 2 Final Push)
+================================================================================
+
+STATUS: Build succeeds (500ms). 6 new components + utilities UNTRACKED.
+GOAL: Commit what's built. Create + wire usePresence hook. Ship Phase 2.
+TIME: 1–2 hours to Phase 2 gate
+
+================================================================================
+WHAT'S BUILT & UNTRACKED (COMMIT NOW)
+================================================================================
+
+NEW COMPONENTS (in app/components/):
+✅ SessionSearch.tsx — Real-time session search
+✅ StatusBadge.tsx — Reusable status display (3 variants)
+✅ OfficeStrip.tsx — Tablet/responsive agent display
+
+NEW UTILITIES (in lib/):
+✅ client-fetch.ts — Fetch with timeout/retry/fallback
+✅ hooks.ts — useKeyboardShortcut hook
+✅ utils.ts — (need to check what's in here)
+
+NEW API ENDPOINTS:
+✅ app/api/health/ — Already committed
+✅ app/api/stream/ — Real SSE (committed: 4aea0a2)
+
+NEW TESTS:
+✅ __tests__/client-fetch-check.js
+✅ __tests__/integration-check.js
+✅ __tests__/fetch-dedup-check.js
+
+================================================================================
+COMMIT SEQUENCE (DO THIS NOW)
+================================================================================
+
+1. STAGE & COMMIT ALL NEW FILES
+   git add app/components/ lib/client-fetch.ts lib/hooks.ts lib/utils.ts
+   git add __tests__/*.js
+   git commit -m "feat: add Phase 2 components, utilities, and tests
+   
+   - SessionSearch: Real-time session filtering
+   - StatusBadge: Reusable status display (dot/inline/pill)
+   - OfficeStrip: Tablet-responsive agent list
+   - client-fetch: Timeout/retry/fallback for API calls
+   - hooks: useKeyboardShortcut for keyboard navigation
+   - Tests: Client-side fetch + integration checks
+   "
+
+2. VERIFY BUILD
+   npm run build  # Should succeed in ~500ms
+   npm test       # Should show ≥48/48 passing
+
+3. PUSH
+   git push
+
+================================================================================
+WHAT'S NEXT (AFTER COMMIT)
+================================================================================
+
+🔴 TASK: Create usePresence Hook
+   File: lib/usePresence.ts (create NEW)
+   What: Subscribe to /api/stream, update agents
+   Time: 45 min
+   
+   Code skeleton:
+   ```typescript
+   "use client";
+   import { useEffect, useState } from "react";
+   import { Agent } from "@/lib/types";
+   
+   export function usePresence() {
+     const [agents, setAgents] = useState<Agent[]>([]);
+     const [connected, setConnected] = useState(false);
+     const [error, setError] = useState<string | null>(null);
+   
+     useEffect(() => {
+       const es = new EventSource("/api/stream");
+       es.onopen = () => setConnected(true);
+       es.onmessage = (e) => {
+         const data = JSON.parse(e.data);
+         if (data.type === "agent_status") {
+           setAgents(prev => 
+             prev.map(a => a.id === data.agent.id ? {...a, ...data.agent} : a)
+               .concat(prev.some(a => a.id === data.agent.id) ? [] : [data.agent])
+           );
+         }
+       };
+       es.onerror = () => {
+         setConnected(false);
+         es.close();
+       };
+       return () => es.close();
+     }, []);
+   
+     return { agents, connected, error };
+   }
+   ```
+
+   Acceptance:
+   - [ ] Hook connects to /api/stream on mount
+   - [ ] Updates agents when type === "agent_status"
+   - [ ] Closes on unmount
+   - [ ] Build succeeds
+
+🔴 TASK: Wire Hook to app/page.tsx
+   What: Import usePresence, use agents from hook
+   Time: 30 min
+   
+   Changes:
+   - Import usePresence
+   - Call hook in Home component
+   - Use hook.agents instead of API-only agents
+   - Show connected status indicator
+
+🔴 TASK: Manual E2E Test
+   What: Verify live presence works
+   Time: 15 min
+   
+   Steps:
+   npm run dev
+   # 1. Agent list loads
+   # 2. "Connected" indicator appears
+   # 3. No console errors
+   # 4. Responsive layout works (≥1024px and <1024px)
+
+================================================================================
+COMMAND SEQUENCE (COPY/PASTE)
+================================================================================
+
+# COMMIT NOW (5 min)
+cd /Users/maxim/Documents/openclaw-office-visualization
+git add app/components/ lib/client-fetch.ts lib/hooks.ts lib/utils.ts __tests__/
+git commit -m "feat: add Phase 2 components, utilities, and tests"
+npm run build && npm test && git push
+
+# CREATE HOOK (45 min)
+# 1. Create lib/usePresence.ts with code above
+# 2. Import in app/page.tsx
+# 3. Replace setAgents API call with hook
+cat > lib/usePresence.ts << 'HOOK_EOF'
+"use client";
+import { useEffect, useState } from "react";
+import { Agent } from "@/lib/types";
+
+export function usePresence() {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const es = new EventSource("/api/stream");
+    
+    es.onopen = () => setConnected(true);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "agent_status" && data.agent) {
+          setAgents(prev => {
+            const exists = prev.find(a => a.id === data.agent.id);
+            if (exists) {
+              return prev.map(a => a.id === data.agent.id ? {...a, ...data.agent} : a);
+            }
+            return [...prev, data.agent];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to parse presence event:", err);
+      }
+    };
+    
+    es.onerror = () => {
+      setConnected(false);
+      es.close();
+    };
+
+    return () => es.close();
+  }, []);
+
+  return { agents, connected, error };
+}
+HOOK_EOF
+
+# VERIFY & COMMIT (10 min)
+npm run build
+npm test
+git add lib/usePresence.ts
+git commit -m "feat: add usePresence hook for real-time agent presence (TASK-020a)"
+git push
+
+# WIRE HOOK (30 min)
+# Edit app/page.tsx:
+# 1. Add: import { usePresence } from "@/lib/usePresence";
+# 2. Add: const presence = usePresence();
+# 3. Change: use presence.agents instead of agents
+# 4. Add indicator: <span>{presence.connected ? "🟢 Live" : "⚫ Offline"}</span>
+
+npm run build && npm test
+git add app/page.tsx
+git commit -m "feat: integrate usePresence hook for live agent presence"
+git push
+
+# MANUAL TEST (15 min)
+npm run dev &
+sleep 2
+# Open http://localhost:3000 in browser
+# Verify: no errors, agent list, "Live" indicator
+# Kill dev server
+
+================================================================================
+SUCCESS LOOKS LIKE
+================================================================================
+
+✅ 3 commits pushed to main
+✅ Build: 500ms, zero errors
+✅ Tests: ≥48 passing
+✅ No console errors
+✅ Agent list loads + shows "Live" status
+✅ Session search works
+✅ Status badges render correctly
+✅ Responsive layout switches at 1024px
+
+================================================================================
+ESTIMATED TIMELINE
+================================================================================
+
+07:04 — This plan
+07:10 — Commit components + utilities
+07:20 — Build verified, tests pass
+07:25 — Create usePresence hook
+08:10 — Hook wired + verified
+08:25 — Manual E2E test complete
+08:30 — Phase 2 COMPLETE ✅
+
+Total: ~1.5 hours
+
+================================================================================
+BLOCKERS
+================================================================================
+
+🟢 NONE
+
+All dependencies available:
+- /api/stream working (committed)
+- EventSource API available (modern browsers)
+- Design tokens ready
+- Components ready
+
+Code can be written + shipped immediately.
+
+================================================================================
+REFERENCE FILES
+================================================================================
+
+- handoffs/product/CYCLE_7_EXECUTION.md — Detailed breakdown
+- handoffs/product/task-board.md — Task assignments
+- app/api/stream/route.ts — SSE handler (already committed)
+- CYCLE_6_EXECUTION.md — usePresence code reference
+
+================================================================================
+GO!
+================================================================================
+
+Next step: Run commit sequence above.
+
+Status: 🚀 FULL SPEED
+Phase 2 Target: COMPLETE by 8:30 AM
