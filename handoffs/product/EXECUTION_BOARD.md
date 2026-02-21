@@ -12,7 +12,9 @@ Ship a transparent Agent Control Panel where work is visible in real time:
 
 ## Workflow Rules (Mandatory)
 1. One run = one small shippable change.
-2. One run = exactly one check command (`npm run build`).
+2. One run = exactly one check command:
+   - Dev roles: `npm run build`
+   - QA/Debugger: `scripts/qa-gate.sh` (build + runtime smoke + err log scan)
 3. No file sprawl: edit only target code + own handoff log.
 4. If no safe change: write `NO_CHANGE` with reason.
 5. Product commits only after tester status is PASS.
@@ -50,7 +52,8 @@ Ship a transparent Agent Control Panel where work is visible in real time:
 
 ## Definition Of Done (Per Task)
 - Code changed in relevant file(s).
-- `npm run build` passed in the same run.
+- Check command passed in the same run (`npm run build` or `scripts/qa-gate.sh` by role).
+- For QA/Debugger: `/` and `/control` return `200` and err log has no runtime chunk/react manifest errors.
 - Role handoff log updated with task id, changed files, result.
 - No unrelated file churn.
 

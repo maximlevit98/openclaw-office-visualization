@@ -9,6 +9,8 @@ logs/
 # optional app code outputs
 node_modules/
 .next/
+.next-dev/
+.next.corrupt.*/
 dist/
 coverage/
 *.tsbuildinfo

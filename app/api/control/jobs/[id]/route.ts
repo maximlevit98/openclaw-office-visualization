@@ -75,6 +75,8 @@ export async function GET(
     return successResponse(toDetail(job));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse("Failed to load control job", message, 500);
+    const isNotFound = message.includes("not found") || message.includes("does not exist");
+    const status = isNotFound ? 404 : 500;
+    return errorResponse("Failed to load control job", message, status);
   }
 }

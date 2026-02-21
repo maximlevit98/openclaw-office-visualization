@@ -2000,3 +2000,17 @@ curl http://localhost:3000/api -H "Accept: application/json"
 - **Change:** Added errorCode extraction from error message (parses [CODE] pattern); safe, non-breaking
 - **Build:** npm run build → ✓ 613ms, 16 routes, clean
 - **Next:** Frontend consume errorCode in activity feed for clearer status signals
+
+---
+
+# Backend Dev Log — Cycle 10 (BE-302: Actionable Error Messages)
+
+**Timestamp:** 2026-02-21 15:15 UTC+3 (Moscow)  
+**Duration:** ~3 minutes  
+**Status:** ✅ PASS
+
+- **Task:** BE-302 — Improve error payloads for control API endpoints
+- **Files:** `app/api/control/jobs/[id]/route.ts`, `app/api/control/jobs/[id]/run/route.ts`
+- **Change:** Smart error detection (auth→403, timeout hints, not-found→404) with actionable messages
+- **Build:** npm run build → ✓ 631ms, 16 routes, clean
+- **Impact:** Frontend can now render clearer error context; status codes reflect actual problem

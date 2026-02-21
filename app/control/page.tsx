@@ -120,7 +120,7 @@ const statusColors: Record<string, string> = {
 
 const CONTROL_MAIN_SPLIT_KEY = "openclaw-control-main-split-width";
 const CONTROL_MAIN_MIN_WIDTH = 420;
-const CONTROL_MAIN_MAX_WIDTH = 1600;
+const CONTROL_MAIN_MAX_WIDTH = 2000;
 const CONTROL_MAIN_RESIZER_WIDTH = 16;
 
 const CONTROL_TEXT = {
@@ -1300,7 +1300,8 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function getControlMainMaxWidth(viewportWidth: number): number {
-  const adaptive = Math.floor(viewportWidth * 0.78);
+  const ratio = viewportWidth >= 1440 ? 0.75 : 0.78;
+  const adaptive = Math.floor(viewportWidth * ratio);
   return clamp(adaptive, CONTROL_MAIN_MIN_WIDTH, CONTROL_MAIN_MAX_WIDTH);
 }
 
@@ -1318,16 +1319,17 @@ function formatDuration(ms?: number): string {
 
 const styles = {
   page: {
-    minHeight: "100vh",
-    height: "auto",
+    minHeight: "100dvh",
+    height: "100dvh",
     backgroundColor: COLORS.bgPrimary,
     color: COLORS.textPrimary,
     display: "flex",
     flexDirection: "column" as const,
     padding: SPACING.md,
     gap: SPACING.md,
-    overflowY: "visible" as const,
+    overflowY: "auto" as const,
     overflowX: "hidden" as const,
+    WebkitOverflowScrolling: "touch",
   } as React.CSSProperties,
 
   header: {

@@ -48,6 +48,13 @@ export async function POST(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse("Failed to run control job", message, 500);
+    const isAuth = message.includes("auth") || message.includes("permission");
+    const isTimeout = message.includes("timeout");
+    const detail = isAuth
+      ? "Permission denied. Verify job ownership and credentials."
+      : isTimeout
+        ? "Job execution timed out. Check job payload and gateway connectivity."
+        : message;
+    return errorResponse("Failed to run control job", detail, isAuth ? 403 : 500);
   }
 }

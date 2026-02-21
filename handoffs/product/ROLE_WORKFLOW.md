@@ -30,12 +30,13 @@
 ### Tester
 - Input: latest repo state
 - Output: `handoffs/tester/test-report.md`, optional `handoffs/tester/bugs.md`
-- Rule: execute check and return PASS/FAIL.
+- Rule: execute `scripts/qa-gate.sh` and return PASS/FAIL.
+- Gate includes: `npm run build`, `GET /` + `GET /control` on `127.0.0.1:3000`, and `.logs/launchd-dev-3000.err.log` runtime chunk scan.
 
 ### Debugger
 - Input: `handoffs/tester/bugs.md`
 - Output: `handoffs/debugger/fix-log.md`, `handoffs/debugger/triage.md`
-- Rule: fix only one top bug, or report NO_OPEN_BUGS.
+- Rule: fix only one top bug, rerun `scripts/qa-gate.sh`, or report NO_OPEN_BUGS.
 
 ### Product
 - Input: all handoff logs + git status/log
@@ -49,5 +50,7 @@
 
 ## Stop Conditions
 - Build fails: stop and log first error line.
+- Runtime smoke fails (`/` or `/control` not `200`): stop and log endpoint + code.
+- Runtime chunk/react manifest errors in `.logs/launchd-dev-3000.err.log`: stop and log first hit.
 - No safe change: log NO_CHANGE.
 - Merge/conflict risk: stop and log BLOCKED.
