@@ -2450,7 +2450,7 @@ const styles = {
   projectsGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1.3fr",
-    gap: SPACING.lg,
+    gap: SPACING.md,
     minHeight: 0,
   } as React.CSSProperties,
 
