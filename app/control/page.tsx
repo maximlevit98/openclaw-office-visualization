@@ -2441,7 +2441,7 @@ const styles = {
     border: `3px solid ${COLORS.borderDefault}`,
     backgroundColor: COLORS.bgSurface,
     boxShadow: SHADOWS.panel,
-    padding: SPACING.lg,
+    padding: SPACING.md,
     display: "flex",
     flexDirection: "column" as const,
     gap: SPACING.md,

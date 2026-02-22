@@ -2014,3 +2014,17 @@ curl http://localhost:3000/api -H "Accept: application/json"
 - **Change:** Smart error detection (auth→403, timeout hints, not-found→404) with actionable messages
 - **Build:** npm run build → ✓ 631ms, 16 routes, clean
 - **Impact:** Frontend can now render clearer error context; status codes reflect actual problem
+
+---
+
+# Backend Dev Log — Cycle 11 (BE-301: Enhanced Activity Metadata)
+
+**Timestamp:** 2026-02-22 11:28 UTC+3 (Moscow)  
+**Duration:** ~4 minutes  
+**Status:** ✅ PASS
+
+- **Task:** BE-301 — Extend control activity payload with runId for traceability
+- **File:** `app/api/control/activity/stream/route.ts` (+2 fields: runId type, runId value assignment)
+- **Change:** Added `runId?: string` field using `latest?.ts?.toString()` for unique run identification
+- **Build:** npm run build → ✓ 664ms, 16 routes, clean, zero TypeScript errors
+- **Next:** Frontend consume runId to link activity feed entries to detailed run logs
