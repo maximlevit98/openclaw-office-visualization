@@ -1,14 +1,17 @@
-# QA Test Report — 2026-02-21 16:35
+# Test Report — QA-301
 
-- **Task IDs:** QA-301, QA-302
-- **Command:** scripts/qa-gate.sh
-- **Result:** ✅ QA_GATE:PASS
-- **Build status:** PASS
-- **Root (/) status:** 200
-- **Control (/control) status:** 200
-- **Errlog scan:** PASS (no runtime errors)
+**Date:** 2026-02-22 07:47 (Europe/Moscow)
+
+## Execution
+
+- **Task IDs:** QA-301
+- **Command:** `/Users/maxim/Documents/openclaw-office-visualization/scripts/qa-gate.sh`
+- **Result:** PASS ✅
+- **Build Status:** PASS
+- **Runtime Smoke (`/` + `/control`):** PASS (200/200)
+- **Error Log Scan:** PASS (no runtime chunks/React manifest errors)
 
 ## Notes
 
-NO_NEW_BUGS
-NO_RUNTIME_ERRORS
+- NO_NEW_BUGS
+- NO_RUNTIME_ERRORS

@@ -1,13 +1,23 @@
 # Component Spec — MVP Components
 
-> Last updated: 2026-02-21 (DES-301 & Cycle 11 — Control Panel Spacing Tightened)  
-> **Implementation Status:** ✅ DES-301: Visual Rhythm Improved
+> Last updated: 2026-02-21 (DES-301 Continuation — Grid Gaps Tightened)  
+> **Implementation Status:** ✅ DES-301 & DES-302 Complete
 >
 > Producer-approved "The Bullpen" concept. Tokens reference: `designer/visual-direction.md`
 >
 > **Scope:** Desktop (≥1024px) and Tablet (768–1023px) responsive behavior. Mobile deferred.
 
 ---
+
+## 🎨 **DES-301 Continuation — Grid Layout Spacing Tightened**
+
+**Direct Code Impact (Feb 21, 23:37 Moscow)**
+
+- ✅ **Micro-step:** DES-301 follow-up — Tighten section-level grid gaps for further compactness
+- ✅ **Change:** Reduced `projectsGrid` gap from `SPACING.lg` (16px) → `SPACING.md` (12px)
+- ✅ **File:** `app/control/page.tsx` (line 2453, projectsGrid style)
+- ✅ **Build:** ✅ Pass (0 errors, `/control` 15.3kB)
+- ✅ **Next:** Tasks DES-301 & DES-302 complete; await FE/Backend outputs
 
 ## 🎨 **DES-302 Continuation — Last Run Metadata Header Polish**
 
@@ -17,7 +27,6 @@
 - ✅ **Change:** Added `fontWeight: 500` + `color: textPrimary` to metadata header for stronger visual hierarchy
 - ✅ **File:** `app/control/page.tsx` (line 1435, collapsed paragraph style)
 - ✅ **Build:** ✅ Pass (0 errors, `/control` 13.1kB)
-- ✅ **Next:** Monitor live feed usability for FE-301 alignment
 
 ## 🎨 **DES-302 — Expanded Last Run Readability**
 
