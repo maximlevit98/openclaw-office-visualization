@@ -9,15 +9,15 @@
 
 ---
 
-## 🎨 **DES-301 Continuation — Section Padding Tightened (Feb 22, 12:28)**
+## 🎨 **DES-301 Continuation — Detail Panel Padding Tightened (Feb 22, 13:05)**
 
 **Direct Code Impact**
 
-- ✅ **Micro-step:** DES-301 follow-up — Reduce section container padding for tighter visual rhythm
-- ✅ **Change:** `projectsSection` padding `lg` (16px) → `md` (12px)
-- ✅ **File:** `app/control/page.tsx` (line 2447)
+- ✅ **Micro-step:** DES-301 follow-up — Reduce detail/summary panel padding for rhythm
+- ✅ **Changes:** (1) Detail panel padding `lg` → `md`; (2) Summary expanded padding `lg` → `md`
+- ✅ **File:** `app/control/page.tsx` (lines 3160, 3173)
 - ✅ **Build:** ✅ Pass (0 errors, `/control` 15.3kB)
-- ✅ **Next:** Reduce card-level padding for further compactness pass
+- ✅ **Next:** Modal padding refinement
 
 ## 🎨 **DES-302 Continuation — Last Run Metadata Header Polish**
 
