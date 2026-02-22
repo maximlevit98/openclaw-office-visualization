@@ -9,15 +9,15 @@
 
 ---
 
-## 🎨 **DES-301 Continuation — Grid Layout Spacing Tightened**
+## 🎨 **DES-301 Continuation — Section Padding Tightened (Feb 22, 12:28)**
 
-**Direct Code Impact (Feb 21, 23:37 Moscow)**
+**Direct Code Impact**
 
-- ✅ **Micro-step:** DES-301 follow-up — Tighten section-level grid gaps for further compactness
-- ✅ **Change:** Reduced `projectsGrid` gap from `SPACING.lg` (16px) → `SPACING.md` (12px)
-- ✅ **File:** `app/control/page.tsx` (line 2453, projectsGrid style)
+- ✅ **Micro-step:** DES-301 follow-up — Reduce section container padding for tighter visual rhythm
+- ✅ **Change:** `projectsSection` padding `lg` (16px) → `md` (12px)
+- ✅ **File:** `app/control/page.tsx` (line 2447)
 - ✅ **Build:** ✅ Pass (0 errors, `/control` 15.3kB)
-- ✅ **Next:** Tasks DES-301 & DES-302 complete; await FE/Backend outputs
+- ✅ **Next:** Reduce card-level padding for further compactness pass
 
 ## 🎨 **DES-302 Continuation — Last Run Metadata Header Polish**
 

@@ -22,6 +22,7 @@ interface LiveActivityEntry {
   excerpt?: string;
   errorCode?: string; // e.g., "TIMEOUT", "AUTH", "NETWORK" extracted from error message
   runId?: string; // Run ID for traceability; useful for linking activity to detailed run logs
+  action?: string; // Job action (from latest run) for context about what the job does
 }
 
 interface StreamPayload {
@@ -73,6 +74,7 @@ async function collectActivitySnapshot(): Promise<LiveActivityEntry[]> {
           excerpt: buildExcerpt(rawText),
           errorCode,
           runId: latest?.ts?.toString(), // Use timestamp as run identifier for traceability
+          action: latest?.action, // Include job action for context about run intent
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to read run state";
@@ -90,6 +92,7 @@ async function collectActivitySnapshot(): Promise<LiveActivityEntry[]> {
           excerpt: buildExcerpt(message),
           errorCode: "READ_ERROR",
           runId: undefined, // No valid run ID on read error
+          action: undefined, // No action available on read error
         };
       }
     })

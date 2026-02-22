@@ -2028,3 +2028,17 @@ curl http://localhost:3000/api -H "Accept: application/json"
 - **Change:** Added `runId?: string` field using `latest?.ts?.toString()` for unique run identification
 - **Build:** npm run build → ✓ 664ms, 16 routes, clean, zero TypeScript errors
 - **Next:** Frontend consume runId to link activity feed entries to detailed run logs
+
+---
+
+# Backend Dev Log — Cycle 12 (BE-301: Add Action Context)
+
+**Timestamp:** 2026-02-22 12:15 UTC+3 (Moscow)  
+**Duration:** ~3 minutes  
+**Status:** ✅ PASS
+
+- **Task:** BE-301 — Add action field for job intent context in activity payload
+- **File:** `app/api/control/activity/stream/route.ts` (+action?: string field + 2 assignments)
+- **Change:** Extended LiveActivityEntry with action from latest run entry for clearer feed context
+- **Build:** npm run build → ✓ 1130ms, 16 routes, clean
+- **Next:** Frontend renders action alongside excerpt for activity readability

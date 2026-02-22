@@ -1,6 +1,6 @@
-# Debugger Triage — Cycle 10+
+# Debugger Triage — Cycle 11
 
-**Date:** 2026-02-22 11:45 (Europe/Moscow)
+**Date:** 2026-02-22 12:45 (Europe/Moscow)
 
 ## Status
 
